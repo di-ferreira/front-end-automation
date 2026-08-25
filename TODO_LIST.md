@@ -7,6 +7,28 @@
 > **Regra:** concluir fase → commit → aguardar OK do usuário → iniciar próxima.
 > Marcar itens com [x] conforme conclusão.
 
+## Status Geral (atualizado em 25/08/2026)
+
+| Fase | Nome | Status |
+|------|------|--------|
+| 0 | Fundação | ✅ Concluída |
+| 1 | Banco de Dados e Autenticação | ✅ Concluída |
+| 2 | Biblioteca de Prompts | ✅ Concluída |
+| 3 | Disparo da Automação | ✅ Concluída (painel) |
+| 4 | Callback de Status e Saída | ✅ Concluída (painel) |
+| 5 | Galeria de Assets | ⬜ Próxima |
+| 6 | Descrições e Aprovação | ⬜ Pendente |
+| 7 | Polimento e Documentação | ⬜ Pendente |
+
+**Pendências externas (infra N8N, não bloqueiam o painel):**
+- Criar workflow no N8N: webhook inicial `{ executionId, prompt }` (respond immediately) → geração → POST callback
+- Convenção de saída: `OUTPUT_DIR/{executionId}/{video|thumbs|music|images}/` + `metadata.json`
+
+**Decisões que valem para todo o projeto:**
+- Docker apenas na fase final; desenvolvimento local sem containers
+- Banco trocável via `DB_PROVIDER` (`sqlite` padrão, `postgres`, `mysql`)
+- Dev local sem N8N: usar mock do webhook (`N8N_WEBHOOK_URL` apontando para um servidor local)
+
 ## Fase 0 — Fundação
 
 - [x] Scaffold Next.js 14+ (TypeScript, App Router) + Tailwind + shadcn/ui
@@ -71,7 +93,7 @@
 
 ## Fase 3 — Disparo da Automação
 
-- [ ] Workflow N8N: Webhook inicial recebendo { executionId, prompt } (respond immediately)
+- [ ] *(infra N8N)* Workflow: Webhook inicial recebendo { executionId, prompt } (respond immediately)
 - [x] API POST /api/executions → grava registro (status=queued) → chama webhook N8N
 - [x] Modal "Nova geração": digitar prompt OU escolher da biblioteca
 - [x] Dashboard: lista execuções com status (fila/executando/concluído/falhou)
@@ -90,8 +112,8 @@
 
 ## Fase 4 — Saída Organizada e Callback de Status
 
-- [ ] N8N salva assets em /output/{executionId}/ (video, thumb, music, images)
-- [ ] metadata.json por execução (título, descrição, prompts usados, arquivos)
+- [ ] *(infra N8N)* Salvar assets em /output/{executionId}/ (video, thumb, music, images)
+- [ ] *(infra N8N)* metadata.json por execução (título, descrição, prompts usados, arquivos)
 - [x] Node HTTP final do N8N → POST /api/executions/{id}/callback
 - [x] Endpoint callback valida e atualiza status no banco
 - [x] Polling de fallback na UI para progresso em tempo real
