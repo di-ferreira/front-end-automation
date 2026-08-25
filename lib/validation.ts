@@ -45,6 +45,14 @@ export const ASSET_TYPES = [
 ] as const;
 export type AssetType = (typeof ASSET_TYPES)[number];
 
+export const ASSET_TYPE_LABELS: Record<AssetType, string> = {
+  video: "Vídeo",
+  thumb: "Thumbnail",
+  music: "Música",
+  image: "Imagem",
+  description: "Descrição",
+};
+
 export const assetTypeSchema = z.enum(ASSET_TYPES);
 
 /**

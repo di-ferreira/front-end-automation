@@ -1,10 +1,8 @@
+import Link from "next/link";
+
 import { auth } from "@/auth";
-import {
-  formatDateTime,
-  EXECUTION_STATUS_BADGE_CLASSES,
-} from "@/lib/format";
-import { EXECUTION_STATUS_LABELS } from "@/lib/validation";
-import type { ExecutionStatus } from "@/lib/validation";
+import { formatDateTime } from "@/lib/format";
+import { StatusBadge } from "./status-badge";
 
 import { NewExecutionDialog } from "./new-execution-dialog";
 import { AutoRefresh } from "./auto-refresh";
@@ -82,6 +80,12 @@ export default async function Home() {
                   {row.promptName ? (
                     <p>Prompt: {row.promptName}</p>
                   ) : null}
+                  <Link
+                    href={`/executions/${row.id}`}
+                    className="text-primary hover:underline"
+                  >
+                    Ver detalhes →
+                  </Link>
                 </div>
               </div>
             </li>
@@ -95,15 +99,5 @@ export default async function Home() {
         {rows.length === 1 ? "" : "s"}.
       </p>
     </section>
-  );
-}
-
-function StatusBadge({ status }: { status: ExecutionStatus }) {
-  return (
-    <span
-      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium whitespace-nowrap ${EXECUTION_STATUS_BADGE_CLASSES[status]}`}
-    >
-      {EXECUTION_STATUS_LABELS[status]}
-    </span>
   );
 }

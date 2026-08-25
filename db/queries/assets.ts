@@ -1,13 +1,22 @@
 import { eq } from "drizzle-orm";
 
 import { db } from "@/db";
-import { assets } from "@/db/schema";
+import { assets, type AssetRow } from "@/db/schema";
 
 export interface ReplaceAssetData {
   type: string;
   filePath: string;
   mimeType?: string | null;
   sizeBytes?: number | null;
+}
+
+export async function listExecutionAssets(
+  executionId: string,
+): Promise<AssetRow[]> {
+  return db
+    .select()
+    .from(assets)
+    .where(eq(assets.executionId, executionId));
 }
 
 /**

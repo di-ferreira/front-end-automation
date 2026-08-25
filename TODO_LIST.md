@@ -8,7 +8,6 @@
 > Marcar itens com [x] conforme conclusão.
 
 ## Status Geral (atualizado em 25/08/2026)
-
 | Fase | Nome | Status |
 |------|------|--------|
 | 0 | Fundação | ✅ Concluída |
@@ -16,8 +15,8 @@
 | 2 | Biblioteca de Prompts | ✅ Concluída |
 | 3 | Disparo da Automação | ✅ Concluída (painel) |
 | 4 | Callback de Status e Saída | ✅ Concluída (painel) |
-| 5 | Galeria de Assets | ⬜ Próxima |
-| 6 | Descrições e Aprovação | ⬜ Pendente |
+| 5 | Galeria de Assets | ✅ Concluída |
+| 6 | Descrições e Aprovação | ⬜ Próxima |
 | 7 | Polimento e Documentação | ⬜ Pendente |
 
 **Pendências externas (infra N8N, não bloqueiam o painel):**
@@ -135,12 +134,22 @@
 
 ## Fase 5 — Galeria de Assets
 
-- [ ] Rota autenticada /api/files/[...path] servindo arquivos do volume
-- [ ] Página /executions/[id]: grid de assets com preview
-- [ ] Player de vídeo, player de áudio, lightbox de imagens
-- [ ] Botões copiar texto/caminho e download
+- [x] Rota autenticada /api/files/[...path] servindo arquivos do volume
+- [x] Página /executions/[id]: grid de assets com preview
+- [x] Player de vídeo, player de áudio, lightbox de imagens
+- [x] Botões copiar texto/caminho e download
 
 **DoD:** todos os assets da execução visíveis e reproduzíveis no painel.
+**Status:** concluída.
+
+> Notas da Fase 5:
+>
+> - Servidor de arquivos com Range/206 (seek em players), HEAD, Content-Type
+>   por extensão, `?download=1` (attachment) e sanitização contra traversal
+> - Página agrupa por tipo (Vídeo, Thumbnail, Imagem, Música, Descrição);
+>   descrições lidas do disco no servidor e exibidas em <pre> com copiar texto
+> - Lightbox base-ui Dialog com navegação anterior/próxima entre imagens
+> - Cards com copiar caminho e download; dashboard ganhou link "Ver detalhes"
 
 ## Fase 6 — Descrições e Aprovação
 

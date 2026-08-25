@@ -68,6 +68,24 @@ export function mimeForFile(filePath: string): string | undefined {
   return MIME_BY_EXT[extOf(filePath)];
 }
 
+/**
+ * Resolve segmentos de caminho dentro do OUTPUT_DIR de forma segura.
+ * Retorna o caminho absoluto ou null se escapar da pasta.
+ */
+export function resolveWithinOutputDir(segments: string[]): string | null {
+  const outputDir = path.resolve(
+    process.env.OUTPUT_DIR?.trim() || "./output",
+  );
+  if (segments.some((segment) => !segment || segment === "." || segment === "..")) {
+    return null;
+  }
+  const target = path.resolve(outputDir, ...segments);
+  if (target !== outputDir && !target.startsWith(outputDir + path.sep)) {
+    return null;
+  }
+  return target;
+}
+
 function extOf(filePath: string): string {
   return path.extname(filePath).slice(1).toLowerCase();
 }
