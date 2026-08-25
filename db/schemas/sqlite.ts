@@ -59,6 +59,7 @@ export const executions = sqliteTable(
     promptId: integer("prompt_id").references(() => prompts.id),
     promptText: text("prompt_text"),
     n8nPayload: text("n8n_payload"), // JSON em texto (resposta do webhook)
+    description: text(), // descrição final (YouTube) editável no painel
     error: text(),
     startedAt: integer("started_at", { mode: "timestamp_ms" }),
     finishedAt: integer("finished_at", { mode: "timestamp_ms" }),

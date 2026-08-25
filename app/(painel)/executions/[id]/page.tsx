@@ -5,16 +5,29 @@ import { notFound } from "next/navigation";
 import { StatusBadge } from "../../status-badge";
 import { formatDateTime } from "@/lib/format";
 import { getExecution } from "@/db/queries/executions";
-import { listExecutionAssets } from "@/db/queries/assets";
+import { listExecutionAssetsDetailed } from "@/db/queries/assets";
 import { resolveWithinOutputDir } from "@/lib/assets";
+import {
+  APPROVAL_STATUS_LABELS,
+  type ApprovalStatus,
+} from "@/lib/validation";
 
 import { AssetGallery, type GalleryAsset } from "./asset-gallery";
+import { EditExecutionDialog } from "./edit-execution-dialog";
 
 export const metadata = {
   title: "Execução",
 };
 
 const MAX_TEXT_BYTES = 20_000;
+
+interface DecisionEntry {
+  assetId: number;
+  assetName: string;
+  status: ApprovalStatus;
+  who: string | null;
+  when: string;
+}
 
 export default async function ExecutionPage({
   params,
@@ -25,29 +38,22 @@ export default async function ExecutionPage({
   const execution = await getExecution(id);
   if (!execution) notFound();
 
-  const rows = await listExecutionAssets(execution.id);
+  const rows = await listExecutionAssetsDetailed(execution.id);
 
   // Lê o conteúdo dos assets de descrição direto do disco (server-side)
   const assets: GalleryAsset[] = await Promise.all(
     rows.map(async (row) => {
-      if (row.type !== "description") {
-        return {
-          id: row.id,
-          type: row.type,
-          filePath: row.filePath,
-          mimeType: row.mimeType,
-          sizeBytes: row.sizeBytes,
-        };
-      }
-      const absolute = resolveWithinOutputDir(row.filePath.split("/"));
       let textContent: string | null = null;
-      if (absolute) {
-        try {
-          textContent = (
-            await fsp.readFile(absolute, { encoding: "utf8", flag: "r" })
-          ).slice(0, MAX_TEXT_BYTES);
-        } catch {
-          textContent = null; // arquivo ainda não existe ou sumiu
+      if (row.type === "description") {
+        const absolute = resolveWithinOutputDir(row.filePath.split("/"));
+        if (absolute) {
+          try {
+            textContent = (
+              await fsp.readFile(absolute, { encoding: "utf8", flag: "r" })
+            ).slice(0, MAX_TEXT_BYTES);
+          } catch {
+            textContent = null; // arquivo ainda não existe ou sumiu
+          }
         }
       }
       return {
@@ -57,9 +63,28 @@ export default async function ExecutionPage({
         mimeType: row.mimeType,
         sizeBytes: row.sizeBytes,
         textContent,
+        approvalStatus: row.approvalStatus,
+        approvedByName: row.approvedByName,
+        approvedAt: row.approvedAt ? row.approvedAt.toISOString() : null,
       };
     }),
   );
+
+  // Histórico de decisões (mais recentes primeiro)
+  const history: DecisionEntry[] = rows
+    .filter((row) => row.approvalStatus !== "pending" && row.approvedAt)
+    .sort(
+      (a, b) =>
+        new Date(b.approvedAt!).getTime() - new Date(a.approvedAt!).getTime(),
+    )
+    .map((row) => ({
+      assetId: row.id,
+      assetName:
+        row.filePath.split("/").slice(1).join("/") || row.filePath,
+      status: row.approvalStatus,
+      who: row.approvedByName ?? "?",
+      when: formatDateTime(row.approvedAt),
+    }));
 
   return (
     <section className="space-y-6">
@@ -77,13 +102,21 @@ export default async function ExecutionPage({
           <div className="min-w-0 space-y-1.5">
             <div className="flex flex-wrap items-center gap-2">
               <StatusBadge status={execution.status} />
-              <h1 className="text-foreground truncate text-xl font-semibold tracking-tight">
+              <h1 className="text-foreground min-w-0 truncate text-xl font-semibold tracking-tight">
                 {execution.title ?? "Execução"}
               </h1>
             </div>
-            <p className="text-muted-foreground line-clamp-3 max-w-3xl text-sm leading-6">
-              {execution.promptText ?? "—"}
+
+            {execution.description ? (
+              <p className="text-foreground max-w-3xl text-sm leading-6 whitespace-pre-wrap">
+                {execution.description}
+              </p>
+            ) : null}
+
+            <p className="text-muted-foreground line-clamp-2 max-w-3xl text-xs leading-5">
+              Prompt: {execution.promptText ?? "—"}
             </p>
+
             {execution.error ? (
               <p role="alert" className="text-destructive text-sm">
                 {execution.error}
@@ -91,24 +124,22 @@ export default async function ExecutionPage({
             ) : null}
           </div>
 
-          <dl className="text-muted-foreground shrink-0 space-y-1 text-xs whitespace-nowrap sm:text-right">
-            <div className="flex justify-between gap-4 sm:block">
-              <dt className="inline sm:hidden">Criada em:</dt>
-              <dd>{formatDateTime(execution.createdAt)}</dd>
-            </div>
-            {execution.startedAt ? (
-              <div className="flex justify-between gap-4 sm:block">
-                <dt className="inline sm:hidden">Início:</dt>
+          <div className="flex shrink-0 flex-col items-start gap-1 sm:items-end">
+            <EditExecutionDialog
+              executionId={execution.id}
+              initialTitle={execution.title}
+              initialDescription={execution.description}
+            />
+            <dl className="text-muted-foreground space-y-1 text-xs whitespace-nowrap sm:text-right">
+              <dd>Criada em {formatDateTime(execution.createdAt)}</dd>
+              {execution.startedAt ? (
                 <dd>Início: {formatDateTime(execution.startedAt)}</dd>
-              </div>
-            ) : null}
-            {execution.finishedAt ? (
-              <div className="flex justify-between gap-4 sm:block">
-                <dt className="inline sm:hidden">Fim:</dt>
+              ) : null}
+              {execution.finishedAt ? (
                 <dd>Fim: {formatDateTime(execution.finishedAt)}</dd>
-              </div>
-            ) : null}
-          </dl>
+              ) : null}
+            </dl>
+          </div>
         </div>
       </header>
 
@@ -123,16 +154,44 @@ export default async function ExecutionPage({
           </span>
         </div>
       ) : (
-        <>
-          <p className="text-muted-foreground text-xs" role="status">
-            {assets.length} asset{assets.length === 1 ? "" : "s"} ·{" "}
-            {execution.status === "running" ? (
-              <span>lista pode atualizar ao concluir a execução</span>
-            ) : null}
-          </p>
-          <AssetGallery assets={assets} />
-        </>
+        <AssetGallery executionId={execution.id} assets={assets} />
       )}
+
+      {/* Histórico das decisões */}
+      {history.length > 0 ? (
+        <section className="border-border bg-card rounded-xl border shadow-sm">
+          <h2 className="border-border text-foreground border-b px-4 py-3 text-sm font-semibold">
+            Histórico de decisões ({history.length})
+          </h2>
+          <ul className="divide-border divide-y">
+            {history.map((entry) => (
+              <li
+                key={entry.assetId}
+                className="flex flex-wrap items-center gap-x-2 gap-y-1 px-4 py-2.5 text-xs"
+              >
+                <span
+                  className={`inline-flex items-center rounded-full border px-2 py-0.5 font-medium ${
+                    entry.status === "approved"
+                      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                      : "border-red-200 bg-red-50 text-red-700"
+                  }`}
+                >
+                  {APPROVAL_STATUS_LABELS[entry.status]}
+                </span>
+                <span
+                  className="text-foreground max-w-64 truncate font-medium"
+                  title={entry.assetName}
+                >
+                  {entry.assetName}
+                </span>
+                <span className="text-muted-foreground ml-auto">
+                  por <strong>{entry.who}</strong> em {entry.when}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
     </section>
   );
 }

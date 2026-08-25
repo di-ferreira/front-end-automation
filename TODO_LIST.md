@@ -16,8 +16,8 @@
 | 3 | Disparo da Automação | ✅ Concluída (painel) |
 | 4 | Callback de Status e Saída | ✅ Concluída (painel) |
 | 5 | Galeria de Assets | ✅ Concluída |
-| 6 | Descrições e Aprovação | ⬜ Próxima |
-| 7 | Polimento e Documentação | ⬜ Pendente |
+| 6 | Descrições e Aprovação | ✅ Concluída |
+| 7 | Polimento e Documentação | ⬜ Próxima |
 
 **Pendências externas (infra N8N, não bloqueiam o painel):**
 - Criar workflow no N8N: webhook inicial `{ executionId, prompt }` (respond immediately) → geração → POST callback
@@ -153,12 +153,25 @@
 
 ## Fase 6 — Descrições e Aprovação
 
-- [ ] Edição de título/descrição persistida no banco
-- [ ] Aprovar/rejeitar por asset e aprovação global da execução
-- [ ] Status de aprovação visível na galeria (badges/filtros)
-- [ ] Histórico das decisões (quem/quando)
+- [x] Edição de título/descrição persistida no banco
+- [x] Aprovar/rejeitar por asset e aprovação global da execução
+- [x] Status de aprovação visível na galeria (badges/filtros)
+- [x] Histórico das decisões (quem/quando)
 
 **DoD:** fluxo de revisão completo utilizável ponta a ponta.
+**Status:** concluída.
+
+> Notas da Fase 6:
+>
+> - Nova coluna `executions.description` (migration 0001 nos 3 dialetos);
+>   título e descrição finais editáveis via modal (PATCH /api/executions/{id})
+> - Aprovação por asset: PATCH .../assets/{assetId} com approved/rejected/
+>   pending (desfazer); grava aprovador e data; 404 se asset de outra execução
+> - "Aprovar todos" (POST .../approve) aprova pendentes e conclui a execução
+> - Galeria: badges por status, borda colorida, filtros Todos/Pendentes/
+>   Aprovados/Rejeitados com contadores; legenda "Aprovado por X em data"
+> - Histórico das decisões listado na página da execução (mais recentes primeiro)
+> - Re-callback do N8N substitui assets e zera aprovações (nova revisão)
 
 ## Fase 7 — Polimento e Documentação
 

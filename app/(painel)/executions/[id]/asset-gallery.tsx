@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import {
@@ -11,9 +12,12 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import {
+  APPROVAL_STATUS_LABELS,
   ASSET_TYPE_LABELS,
+  type ApprovalStatus,
   type AssetType,
 } from "@/lib/validation";
+import { cn } from "@/lib/utils";
 
 export interface GalleryAsset {
   id: number;
@@ -24,6 +28,10 @@ export interface GalleryAsset {
   createdAt?: string | null;
   /** Conteúdo textual pré-lido no servidor (apenas descriptions). */
   textContent?: string | null;
+  approvalStatus: ApprovalStatus;
+  approvedByName?: string | null;
+  /** ISO string (serializável entre RSC e client). */
+  approvedAt?: string | null;
 }
 
 const SECTION_ORDER: AssetType[] = [
@@ -33,6 +41,21 @@ const SECTION_ORDER: AssetType[] = [
   "music",
   "description",
 ];
+
+type ApprovalFilter = "all" | ApprovalStatus;
+
+const FILTERS: { value: ApprovalFilter; label: string }[] = [
+  { value: "all", label: "Todos" },
+  { value: "pending", label: "Pendentes" },
+  { value: "approved", label: "Aprovados" },
+  { value: "rejected", label: "Rejeitados" },
+];
+
+const BADGE_CLASSES: Record<ApprovalStatus, string> = {
+  pending: "border-amber-200 bg-amber-50 text-amber-700",
+  approved: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  rejected: "border-red-200 bg-red-50 text-red-700",
+};
 
 function fileUrl(filePath: string, download = false): string {
   const encoded = filePath
@@ -54,46 +77,127 @@ function formatBytes(bytes: number | null | undefined): string {
   return `${value.toFixed(value >= 10 || unit === 0 ? 0 : 1)} ${units[unit]}`;
 }
 
-export function AssetGallery({ assets }: { assets: GalleryAsset[] }) {
+export function AssetGallery({
+  executionId,
+  assets,
+}: {
+  executionId: string;
+  assets: GalleryAsset[];
+}) {
+  const router = useRouter();
+  const [filter, setFilter] = useState<ApprovalFilter>("all");
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [approvingAll, setApprovingAll] = useState(false);
 
-  const images = assets.filter(
+  const counts = {
+    all: assets.length,
+    pending: assets.filter((asset) => asset.approvalStatus === "pending").length,
+    approved: assets.filter((asset) => asset.approvalStatus === "approved").length,
+    rejected: assets.filter((asset) => asset.approvalStatus === "rejected").length,
+  };
+
+  const visible =
+    filter === "all" ? assets : assets.filter((a) => a.approvalStatus === filter);
+
+  const images = visible.filter(
     (asset) => asset.type === "image" || asset.type === "thumb",
   );
 
-  return (
-    <div className="space-y-8">
-      {SECTION_ORDER.map((type) => {
-        const group = assets.filter((asset) => asset.type === type);
-        if (group.length === 0) return null;
+  async function decide(assetId: number, approvalStatus: ApprovalStatus) {
+    await fetch(`/api/executions/${executionId}/assets/${assetId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ approvalStatus }),
+    });
+    router.refresh();
+  }
 
-        return (
-          <section key={type} className="space-y-3">
-            <h2 className="text-foreground flex items-center gap-2 text-sm font-semibold">
-              {ASSET_TYPE_LABELS[type]}
-              <span className="text-muted-foreground font-normal">
-                ({group.length})
+  async function approveAll() {
+    setApprovingAll(true);
+    try {
+      await fetch(`/api/executions/${executionId}/approve`, { method: "POST" });
+      router.refresh();
+    } finally {
+      setApprovingAll(false);
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Barra de filtros + aprovação global */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="bg-muted flex flex-wrap gap-1 rounded-lg p-1">
+          {FILTERS.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => setFilter(option.value)}
+              className={cn(
+                "rounded-md px-3 py-1.5 text-sm font-medium transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+                filter === option.value
+                  ? "bg-card text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {option.label}
+              <span className="text-muted-foreground ml-1 text-xs tabular-nums">
+                {counts[option.value]}
               </span>
-            </h2>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {group.map((asset) => (
-                <AssetCard
-                  key={asset.id}
-                  asset={asset}
-                  onOpenImage={
-                    images.some((image) => image.id === asset.id)
-                      ? () =>
-                          setLightboxIndex(
-                            images.findIndex((image) => image.id === asset.id),
-                          )
-                      : undefined
-                  }
-                />
-              ))}
-            </div>
-          </section>
-        );
-      })}
+            </button>
+          ))}
+        </div>
+
+        {counts.pending > 0 ? (
+          <Button variant="secondary" size="sm" onClick={approveAll} disabled={approvingAll}>
+            {approvingAll
+              ? "Aprovando..."
+              : `Aprovar todos (${counts.pending})`}
+          </Button>
+        ) : null}
+      </div>
+
+      {visible.length === 0 ? (
+        <p className="text-muted-foreground rounded-xl border border-dashed px-6 py-12 text-center text-sm">
+          Nenhum asset neste filtro.
+        </p>
+      ) : (
+        <div className="space-y-8">
+          {SECTION_ORDER.map((type) => {
+            const group = visible.filter((asset) => asset.type === type);
+            if (group.length === 0) return null;
+
+            return (
+              <section key={type} className="space-y-3">
+                <h2 className="text-foreground flex items-center gap-2 text-sm font-semibold">
+                  {ASSET_TYPE_LABELS[type]}
+                  <span className="text-muted-foreground font-normal">
+                    ({group.length})
+                  </span>
+                </h2>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {group.map((asset) => (
+                    <AssetCard
+                      key={asset.id}
+                      asset={asset}
+                      onDecide={decide}
+                      onOpenImage={
+                        images.some((image) => image.id === asset.id)
+                          ? () =>
+                              setLightboxIndex(
+                                images.findIndex(
+                                  (image) => image.id === asset.id,
+                                ),
+                              )
+                          : undefined
+                      }
+                    />
+                  ))}
+                </div>
+              </section>
+            );
+          })}
+        </div>
+      )}
 
       <Dialog
         open={lightboxIndex !== null}
@@ -154,14 +258,31 @@ export function AssetGallery({ assets }: { assets: GalleryAsset[] }) {
   );
 }
 
+const DECISION_VERB: Record<Exclude<ApprovalStatus, "pending">, string> = {
+  approved: "Aprovado",
+  rejected: "Rejeitado",
+};
+
+function formatDecision(iso: string): string {
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(iso));
+}
+
 function AssetCard({
   asset,
   onOpenImage,
+  onDecide,
 }: {
   asset: GalleryAsset;
   onOpenImage?: () => void;
+  onDecide: (assetId: number, status: ApprovalStatus) => Promise<void>;
 }) {
   const [copied, setCopied] = useState<"path" | "text" | null>(null);
+  const [pendingDecision, setPendingDecision] = useState(false);
 
   async function copy(value: string, kind: "path" | "text") {
     try {
@@ -173,11 +294,32 @@ function AssetCard({
     }
   }
 
+  async function runDecision(status: ApprovalStatus) {
+    setPendingDecision(true);
+    try {
+      await onDecide(asset.id, status);
+    } finally {
+      setPendingDecision(false);
+    }
+  }
+
   return (
-    <article className="border-border bg-card flex flex-col overflow-hidden rounded-xl border shadow-sm">
-      <div className="bg-muted/30 flex min-h-40 flex-1 items-center justify-center">
+    <article
+      className={cn(
+        "border-border bg-card flex flex-col overflow-hidden rounded-xl border shadow-sm transition-colors",
+        asset.approvalStatus === "approved" && "border-emerald-300",
+        asset.approvalStatus === "rejected" &&
+          "border-red-200 opacity-90 hover:opacity-100",
+      )}
+    >
+      <div className="bg-muted/30 relative flex min-h-40 flex-1 items-center justify-center">
+        <span
+          className={`absolute top-2 right-2 z-10 inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium ${BADGE_CLASSES[asset.approvalStatus]}`}
+        >
+          {APPROVAL_STATUS_LABELS[asset.approvalStatus]}
+        </span>
+
         {asset.type === "video" ? (
-           
           <video
             controls
             preload="metadata"
@@ -185,8 +327,12 @@ function AssetCard({
             className="aspect-video w-full"
           />
         ) : asset.type === "music" ? (
-           
-          <audio controls preload="metadata" src={fileUrl(asset.filePath)} className="w-full px-3" />
+          <audio
+            controls
+            preload="metadata"
+            src={fileUrl(asset.filePath)}
+            className="w-full px-3"
+          />
         ) : onOpenImage ? (
           <button
             type="button"
@@ -214,7 +360,46 @@ function AssetCard({
           {asset.filePath.split("/").slice(1).join("/") || asset.filePath}
           {asset.sizeBytes ? ` · ${formatBytes(asset.sizeBytes)}` : ""}
         </p>
+
+        {asset.approvedByName && asset.approvedAt ? (
+          <p className="text-muted-foreground text-[11px] italic">
+            {DECISION_VERB[
+              asset.approvalStatus as Exclude<ApprovalStatus, "pending">
+            ] ?? ""}{" "}
+            por {asset.approvedByName} em {formatDecision(asset.approvedAt)}
+          </p>
+        ) : null}
+
         <div className="flex flex-wrap gap-1">
+          {asset.approvalStatus !== "approved" ? (
+            <Button
+              size="xs"
+              onClick={() => runDecision("approved")}
+              disabled={pendingDecision}
+            >
+              Aprovar
+            </Button>
+          ) : null}
+          {asset.approvalStatus !== "rejected" ? (
+            <Button
+              variant="destructive"
+              size="xs"
+              onClick={() => runDecision("rejected")}
+              disabled={pendingDecision}
+            >
+              Rejeitar
+            </Button>
+          ) : null}
+          {asset.approvalStatus !== "pending" ? (
+            <Button
+              variant="ghost"
+              size="xs"
+              onClick={() => runDecision("pending")}
+              disabled={pendingDecision}
+            >
+              Desfazer
+            </Button>
+          ) : null}
           <Button
             variant="ghost"
             size="xs"

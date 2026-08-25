@@ -62,6 +62,7 @@ export const executions = pgTable(
     promptId: integer("prompt_id").references(() => prompts.id),
     promptText: text("prompt_text"),
     n8nPayload: text("n8n_payload"), // JSON em texto (resposta do webhook)
+    description: text(), // descrição final (YouTube) editável no painel
     error: text(),
     startedAt: timestamp("started_at", { withTimezone: true }),
     finishedAt: timestamp("finished_at", { withTimezone: true }),

@@ -64,6 +64,7 @@ export const executions = mysqlTable(
     promptId: int("prompt_id").references(() => prompts.id),
     promptText: text("prompt_text"),
     n8nPayload: text("n8n_payload"), // JSON em texto (resposta do webhook)
+    description: text(), // descrição final (YouTube) editável no painel
     error: text(),
     startedAt: datetime("started_at", { fsp: 3 }),
     finishedAt: datetime("finished_at", { fsp: 3 }),

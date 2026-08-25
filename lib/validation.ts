@@ -101,6 +101,31 @@ export const createExecutionSchema = z
 
 export type CreateExecutionInput = z.infer<typeof createExecutionSchema>;
 
+/** Edição de título/descrição da execução (revisão para YouTube). */
+export const updateExecutionSchema = z
+  .object({
+    title: z.string().trim().min(1, "Título não pode ficar vazio").max(500, "Título muito longo").optional(),
+    description: z.string().trim().max(5_000, "Descrição muito longa").optional(),
+  })
+  .refine((data) => data.title !== undefined || data.description !== undefined, {
+    message: "Envie título e/ou descrição",
+  });
+
+export type UpdateExecutionInput = z.infer<typeof updateExecutionSchema>;
+
+export const APPROVAL_STATUSES = ["pending", "approved", "rejected"] as const;
+export type ApprovalStatus = (typeof APPROVAL_STATUSES)[number];
+
+export const APPROVAL_STATUS_LABELS: Record<ApprovalStatus, string> = {
+  pending: "Pendente",
+  approved: "Aprovado",
+  rejected: "Rejeitado",
+};
+
+export const assetApprovalSchema = z.object({
+  approvalStatus: z.enum(APPROVAL_STATUSES),
+});
+
 /** Primeiro erro legível de um ZodError (v4: issues[].message). */
 export function firstZodMessage(error: z.ZodError): string {
   return error.issues[0]?.message ?? "Dados inválidos";

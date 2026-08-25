@@ -104,3 +104,22 @@ export async function incrementPromptUse(promptId: number): Promise<void> {
     })
     .where(eq(prompts.id, promptId));
 }
+
+/** Edita título e/ou descrição final da execução (revisão para YouTube). */
+export async function updateExecutionText(
+  id: string,
+  data: { title?: string; description?: string },
+): Promise<ExecutionRow | null> {
+  if (!(await getExecution(id))) return null;
+
+  const values: Partial<{
+    title: string | null;
+    description: string | null;
+    updatedAt: Date;
+  }> = { updatedAt: new Date() };
+  if (data.title !== undefined) values.title = data.title || null;
+  if (data.description !== undefined) values.description = data.description || null;
+
+  await db.update(executions).set(values).where(eq(executions.id, id));
+  return getExecution(id);
+}
