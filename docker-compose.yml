@@ -1,0 +1,18 @@
+services:
+  app:
+    build: .
+    container_name: yt-automation-app
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    env_file:
+      - .env
+    volumes:
+      - "${OUTPUT_DIR_HOST:-./output}:/app/output"
+    networks:
+      - infra
+
+networks:
+  infra:
+    external: true
+    name: ${DOCKER_NETWORK:-infra_default}
