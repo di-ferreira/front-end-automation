@@ -1,11 +1,8 @@
 import { and, desc, eq, sql } from "drizzle-orm";
 
 import { db } from "@/db";
-import { executions, prompts } from "@/db/schema";
-import type {
-  ExecutionRow,
-  PromptRow,
-} from "@/db/schema";
+import { prompts } from "@/db/schema";
+import type { PromptRow } from "@/db/schema";
 import type {
   CreatePromptInput,
   PromptType,
@@ -110,11 +107,4 @@ export async function deletePrompt(id: number): Promise<boolean> {
   if (!existing) return false;
   await db.delete(prompts).where(eq(prompts.id, id));
   return true;
-}
-
-export async function listExecutions(): Promise<ExecutionRow[]> {
-  return db
-    .select()
-    .from(executions)
-    .orderBy(desc(executions.createdAt));
 }

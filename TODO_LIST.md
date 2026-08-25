@@ -72,11 +72,21 @@
 ## Fase 3 — Disparo da Automação
 
 - [ ] Workflow N8N: Webhook inicial recebendo { executionId, prompt } (respond immediately)
-- [ ] API POST /api/executions → grava registro (status=running) → chama webhook N8N
-- [ ] Modal "Nova geração": digitar prompt OU escolher da biblioteca
-- [ ] Dashboard: lista execuções com status (fila/executando/concluído/falhou)
+- [x] API POST /api/executions → grava registro (status=queued) → chama webhook N8N
+- [x] Modal "Nova geração": digitar prompt OU escolher da biblioteca
+- [x] Dashboard: lista execuções com status (fila/executando/concluído/falhou)
 
 **DoD:** clique no front dispara o workflow N8N com os parâmetros corretos.
+**Status:** concluída no painel; workflow do N8N a criar na infra (contrato pronto).
+
+> Notas da Fase 3:
+>
+> - Fluxo: cria execução `queued` → dispara webhook → `running` (+uso do prompt)
+>   ou `failed` com mensagem de erro se o webhook não responder 2xx (timeout 10s)
+> - Contrato: POST N8N_WEBHOOK_URL { executionId, prompt }, Authorization Bearer
+>   opcional via N8N_API_KEY; testado com mock local
+> - API GET /api/executions disponível para polling futuro
+> - Origem do prompt validada por zod: promptId XOR promptText
 
 ## Fase 4 — Saída Organizada e Callback de Status
 
