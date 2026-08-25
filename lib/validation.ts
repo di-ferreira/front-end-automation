@@ -36,6 +36,39 @@ export const EXECUTION_STATUS_LABELS: Record<ExecutionStatus, string> = {
   failed: "Falhou",
 };
 
+export const ASSET_TYPES = [
+  "video",
+  "thumb",
+  "music",
+  "image",
+  "description",
+] as const;
+export type AssetType = (typeof ASSET_TYPES)[number];
+
+export const assetTypeSchema = z.enum(ASSET_TYPES);
+
+/**
+ * Contrato do callback do N8N (POST /api/executions/{id}/callback).
+ * `assets` é opcional: se ausente, o painel varre OUTPUT_DIR/{executionId}.
+ */
+export const executionCallbackSchema = z.object({
+  status: z.enum(["completed", "failed"]),
+  error: z.string().trim().max(1000, "Erro muito longo").optional(),
+  assets: z
+    .array(
+      z.object({
+        type: assetTypeSchema,
+        filePath: z.string().trim().min(1).max(1024),
+        mimeType: z.string().trim().max(100).optional(),
+        sizeBytes: z.number().int().nonnegative().optional(),
+      }),
+    )
+    .max(200)
+    .optional(),
+});
+
+export type ExecutionCallbackInput = z.infer<typeof executionCallbackSchema>;
+
 /**
  * Exige exatamente uma origem de prompt: biblioteca (promptId) OU texto livre.
  */

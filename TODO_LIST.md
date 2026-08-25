@@ -92,11 +92,24 @@
 
 - [ ] N8N salva assets em /output/{executionId}/ (video, thumb, music, images)
 - [ ] metadata.json por execução (título, descrição, prompts usados, arquivos)
-- [ ] Node HTTP final do N8N → POST /api/executions/{id}/callback
-- [ ] Endpoint callback valida e atualiza status no banco
-- [ ] Polling de fallback na UI para progresso em tempo real
+- [x] Node HTTP final do N8N → POST /api/executions/{id}/callback
+- [x] Endpoint callback valida e atualiza status no banco
+- [x] Polling de fallback na UI para progresso em tempo real
 
 **DoD:** execução aparece como "concluída" automaticamente após o N8N terminar.
+**Status:** concluída no painel; convenção de pastas a seguir pelo workflow N8N.
+
+> Notas da Fase 4:
+>
+> - Callback autenticado por segredo compartilhado (header `x-callback-secret`
+>   ou `Authorization: Bearer`, env `N8N_CALLBACK_SECRET`); rota isenta de
+>   sessão no proxy
+> - Contrato: `{ status: "completed" | "failed", error?, assets? }`; sem
+>   `assets`, o painel varre `OUTPUT_DIR/{executionId}` (pasta define o tipo:
+>   video/thumbs/music/images; fallback por extensão; metadata.json ignorado)
+> - Caminhos sanitizados (relativos a OUTPUT_DIR, prefixados com executionId,
+>   traversal rejeitado); assets substituídos em lote (callback reentrante)
+> - UI: polling de 5s via RSC refresh apenas enquanto há execuções ativas
 
 ## Fase 5 — Galeria de Assets
 

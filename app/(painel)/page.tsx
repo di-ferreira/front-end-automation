@@ -7,11 +7,15 @@ import { EXECUTION_STATUS_LABELS } from "@/lib/validation";
 import type { ExecutionStatus } from "@/lib/validation";
 
 import { NewExecutionDialog } from "./new-execution-dialog";
+import { AutoRefresh } from "./auto-refresh";
 import { listExecutions } from "@/db/queries/executions";
 
 export default async function Home() {
   const session = await auth();
   const rows = await listExecutions();
+  const hasActive = rows.some(
+    (row) => row.status === "queued" || row.status === "running",
+  );
 
   return (
     <section className="space-y-6">
@@ -26,6 +30,8 @@ export default async function Home() {
         </div>
         <NewExecutionDialog />
       </div>
+
+      <AutoRefresh active={hasActive} />
 
       {rows.length === 0 ? (
         <div className="border-border bg-card text-muted-foreground flex flex-col items-center justify-center gap-2 rounded-xl border px-6 py-16 text-center text-sm shadow-sm">
