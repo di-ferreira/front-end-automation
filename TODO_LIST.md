@@ -1,0 +1,78 @@
+# TODO LIST — Front-end Automação de Vídeos YouTube
+
+> Projeto: painel Next.js que dispara automação N8N (assets: descrição, música,
+> imagens/thumbnail, vídeo via ComfyUI), exibe galeria dos arquivos gerados e
+> gerencia aprovação e biblioteca de prompts.
+>
+> **Regra:** concluir fase → commit → aguardar OK do usuário → iniciar próxima.
+> Marcar itens com [x] conforme conclusão.
+
+## Fase 0 — Fundação
+- [ ] Scaffold Next.js 14+ (TypeScript, App Router) + Tailwind + shadcn/ui
+- [ ] Estrutura de pastas (app/, components/, lib/, db/)
+- [ ] ESLint + Prettier configurados
+- [ ] Dockerfile (standalone) + docker-compose integrado à rede Docker existente
+- [ ] Volume compartilhado da pasta de saída (/output) montado no container
+- [ ] .env.example (DATABASE_URL, AUTH_SECRET, N8N_WEBHOOK_URL, OUTPUT_DIR...)
+- [ ] Página inicial "hello world" servindo no container
+
+**DoD:** app sobe em Docker na rede existente e responde em localhost.
+
+## Fase 1 — Banco de Dados e Autenticação
+- [ ] Drizzle ORM conectado ao Postgres existente
+- [ ] Schema: users, executions, assets, prompts (+ migrations)
+- [ ] Auth.js (credentials) com usuário no banco + bcrypt
+- [ ] Middleware protegendo todas as rotas exceto /login
+- [ ] Tela de login PT-BR
+
+**DoD:** login funcional; schema aplicado no Postgres.
+
+## Fase 2 — Biblioteca de Prompts
+- [ ] API CRUD /api/prompts (tipos: música, imagem, descrição, vídeo)
+- [ ] Página /prompts: listagem com filtro por tipo + busca
+- [ ] Formulário criar/editar/excluir
+- [ ] Campos: nome, tipo, conteúdo, tags, contador de uso, último uso
+
+**DoD:** CRUD completo funcionando na UI.
+
+## Fase 3 — Disparo da Automação
+- [ ] Workflow N8N: Webhook inicial recebendo { executionId, prompt } (respond immediately)
+- [ ] API POST /api/executions → grava registro (status=running) → chama webhook N8N
+- [ ] Modal "Nova geração": digitar prompt OU escolher da biblioteca
+- [ ] Dashboard: lista execuções com status (fila/executando/concluído/falhou)
+
+**DoD:** clique no front dispara o workflow N8N com os parâmetros corretos.
+
+## Fase 4 — Saída Organizada e Callback de Status
+- [ ] N8N salva assets em /output/{executionId}/ (video, thumb, music, images)
+- [ ] metadata.json por execução (título, descrição, prompts usados, arquivos)
+- [ ] Node HTTP final do N8N → POST /api/executions/{id}/callback
+- [ ] Endpoint callback valida e atualiza status no banco
+- [ ] Polling de fallback na UI para progresso em tempo real
+
+**DoD:** execução aparece como "concluída" automaticamente após o N8N terminar.
+
+## Fase 5 — Galeria de Assets
+- [ ] Rota autenticada /api/files/[...path] servindo arquivos do volume
+- [ ] Página /executions/[id]: grid de assets com preview
+- [ ] Player de vídeo, player de áudio, lightbox de imagens
+- [ ] Botões copiar texto/caminho e download
+
+**DoD:** todos os assets da execução visíveis e reproduzíveis no painel.
+
+## Fase 6 — Descrições e Aprovação
+- [ ] Edição de título/descrição persistida no banco
+- [ ] Aprovar/rejeitar por asset e aprovação global da execução
+- [ ] Status de aprovação visível na galeria (badges/filtros)
+- [ ] Histórico das decisões (quem/quando)
+
+**DoD:** fluxo de revisão completo utilizável ponta a ponta.
+
+## Fase 7 — Polimento e Documentação
+- [ ] Estados de loading, erro e vazio em todas as telas
+- [ ] Responsividade mobile/tablet
+- [ ] Revisão de textos PT-BR
+- [ ] README: setup, variáveis de ambiente, contrato N8N ↔ front
+- [ ] (Fase 2 futura) Regeneração individual de assets
+
+**DoD:** projeto entregue documentado para uso diário.
