@@ -51,12 +51,23 @@
 
 ## Fase 2 — Biblioteca de Prompts
 
-- [ ] API CRUD /api/prompts (tipos: música, imagem, descrição, vídeo)
-- [ ] Página /prompts: listagem com filtro por tipo + busca
-- [ ] Formulário criar/editar/excluir
-- [ ] Campos: nome, tipo, conteúdo, tags, contador de uso, último uso
+- [x] API CRUD /api/prompts (tipos: música, imagem, descrição, vídeo)
+- [x] Página /prompts: listagem com filtro por tipo + busca
+- [x] Formulário criar/editar/excluir
+- [x] Campos: nome, tipo, conteúdo, tags, contador de uso, último uso
 
 **DoD:** CRUD completo funcionando na UI.
+**Status:** concluída.
+
+> Notas da Fase 2:
+>
+> - API REST protegida por sessão (401 JSON em /api sem login)
+> - Validação com zod (`lib/validation.ts`); nome único → 409 na UI
+> - Consultas centralizadas em `db/queries/prompts.ts` (portáveis entre dialetos,
+>   sem `.returning()` que não existe no MySQL)
+> - Busca case-insensitive por nome/conteúdo/tags + filtro por tipo via URL
+> - Route group `(painel)` com header/nav compartilhados; modais base-ui Dialog
+>   (criar/editar) e confirmação de exclusão
 
 ## Fase 3 — Disparo da Automação
 

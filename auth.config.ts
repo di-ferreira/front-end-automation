@@ -22,6 +22,14 @@ export const authConfig = {
 
       if (isAuthApi) return true;
 
+      // APIs protegidas respondem 401 JSON em vez de redirecionar
+      if (pathname.startsWith("/api")) {
+        if (!isLoggedIn) {
+          return Response.json({ error: "Não autenticado" }, { status: 401 });
+        }
+        return true;
+      }
+
       if (isLoginPage) {
         if (isLoggedIn) {
           return Response.redirect(new URL("/", request.nextUrl));
