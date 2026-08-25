@@ -37,6 +37,10 @@ yarn-error.log*
 # generated assets output (volume compartilhado com o N8N)
 /output
 
+# banco sqlite local
+/data/*.db
+/data/*.db-*
+
 # vercel
 .vercel
 

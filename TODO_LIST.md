@@ -29,13 +29,25 @@
 
 ## Fase 1 — Banco de Dados e Autenticação
 
-- [ ] Drizzle ORM conectado ao Postgres existente
-- [ ] Schema: users, executions, assets, prompts (+ migrations)
-- [ ] Auth.js (credentials) com usuário no banco + bcrypt
-- [ ] Middleware protegendo todas as rotas exceto /login
-- [ ] Tela de login PT-BR
+- [x] Drizzle ORM multi-dialeto (sqlite | postgres | mysql via DB_PROVIDER)
+- [x] Schema: users, executions, assets, prompts (+ migrations por dialeto)
+- [x] Auth.js (credentials) com usuário no banco + bcrypt
+- [x] Proxy (ex-middleware) protegendo todas as rotas exceto /login
+- [x] Tela de login PT-BR
 
-**DoD:** login funcional; schema aplicado no Postgres.
+**DoD:** login funcional; schema aplicado no banco.
+**Status:** concluída (dev local sem Docker).
+
+> Notas da Fase 1:
+>
+> - Banco trocável por `DB_PROVIDER` (`sqlite` padrão em `./data/app.db`,
+>   `postgres` via postgres.js, `mysql` via mysql2) — sem Docker
+> - Schemas equivalentes por dialeto em `db/schemas/`; facade em `db/schema.ts`
+> - Migrations geradas/aplicadas por dialeto: `npm run db:generate[:sqlite|:pg|:mysql]`,
+>   `npm run db:migrate`, seed admin: `npm run db:seed`
+> - Auth.js v5 (next-auth@beta): sessão JWT, bcryptjs, proxy edge-safe (`proxy.ts`,
+>   renomeado de middleware.ts no Next 16)
+> - Usuário inicial: `admin@painel.local` / `trocar123` (envs SEED_ADMIN_*)
 
 ## Fase 2 — Biblioteca de Prompts
 
