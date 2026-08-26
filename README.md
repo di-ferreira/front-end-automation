@@ -348,6 +348,138 @@ Suporta `?download` para forçar download e `Range: bytes=0-1023` para seek.
 | `/api/executions/[id]/callback` | `x-callback-secret` |
 | `/api/executions/[id]/provision` | `x-callback-secret` |
 
+## Exemplos práticos (curl)
+
+### Login e obter sessão
+
+```bash
+B=http://localhost:3000
+JAR=cookies.txt
+rm -f $JAR
+
+# Login
+CSRF=$(curl -s -c $JAR $B/api/auth/csrf | python3 -c "import sys,json;print(json.load(sys.stdin)['csrfToken'])")
+curl -s -b $JAR -c $JAR -o /dev/null -X POST $B/api/auth/callback/credentials \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "csrfToken=$CSRF&email=admin@painel.local&password=trocar123"
+
+# Verificar sessão
+curl -s -b $JAR $B/api/auth/session | python3 -m json.tool
+```
+
+### Usuários
+
+```bash
+# Listar
+curl -s -b $JAR $B/api/users | python3 -m json.tool
+
+# Criar
+curl -s -b $JAR -X POST $B/api/users \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Maria","email":"maria@example.com","password":"123456","role":"editor"}'
+
+# Atualizar
+curl -s -b $JAR -X PUT $B/api/users/2 \
+  -H "Content-Type: application/json" \
+  -d '{"role":"admin"}'
+
+# Deletar
+curl -s -b $JAR -X DELETE $B/api/users/2 -w "%{http_code}"
+```
+
+### Prompts
+
+```bash
+# Criar
+curl -s -b $JAR -X POST $B/api/prompts \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Intro 30s","type":"video","content":"Crie um video de 30 segundos com musica animada","tags":"intro,curto"}'
+
+# Listar (com filtros)
+curl -s -b $JAR "$B/api/prompts?q=video&type=video"
+
+# Atualizar
+curl -s -b $JAR -X PUT $B/api/prompts/1 \
+  -H "Content-Type: application/json" \
+  -d '{"content":"Novo texto do prompt"}'
+
+# Deletar
+curl -s -b $JAR -X DELETE $B/api/prompts/1 -w "%{http_code}"
+```
+
+### Execuções
+
+```bash
+# Criar (texto livre)
+curl -s -b $JAR -X POST $B/api/executions \
+  -H "Content-Type: application/json" \
+  -d '{"promptText":"Crie um video animado sobre o Brasil"}'
+
+# Criar (prompt da biblioteca)
+curl -s -b $JAR -X POST $B/api/executions \
+  -H "Content-Type: application/json" \
+  -d '{"promptId":1}'
+
+# Listar todas
+curl -s -b $JAR $B/api/executions
+
+# Listar por status
+curl -s -b $JAR "$B/api/executions?status=completed"
+curl -s -b $JAR "$B/api/executions?status=failed"
+
+# Editar titulo/descricao
+curl -s -b $JAR -X PATCH $B/api/executions/{id} \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Meu Video Final","description":"Descricao para o YouTube"}'
+
+# Aprovar todos os assets pendentes
+curl -s -b $JAR -X POST $B/api/executions/{id}/approve
+```
+
+### Assets (aprovação individual)
+
+```bash
+# Aprovar
+curl -s -b $JAR -X PATCH $B/api/executions/{id}/assets/{assetId} \
+  -H "Content-Type: application/json" \
+  -d '{"approvalStatus":"approved"}'
+
+# Rejeitar
+curl -s -b $JAR -X PATCH $B/api/executions/{id}/assets/{assetId} \
+  -H "Content-Type: application/json" \
+  -d '{"approvalStatus":"rejected"}'
+```
+
+### Callback N8N (simular webhook externo)
+
+```bash
+# Sucesso
+curl -X POST $B/api/executions/{id}/callback \
+  -H "x-callback-secret: $N8N_CALLBACK_SECRET" \
+  -H "Content-Type: application/json" \
+  -d '{"status":"completed"}'
+
+# Falha
+curl -X POST $B/api/executions/{id}/callback \
+  -H "x-callback-secret: $N8N_CALLBACK_SECRET" \
+  -H "Content-Type: application/json" \
+  -d '{"status":"failed","error":"ComfyUI fora do ar"}'
+
+# Criar assets fake (teste)
+curl -X POST $B/api/executions/{id}/provision \
+  -H "x-callback-secret: $N8N_CALLBACK_SECRET"
+```
+
+### Arquivos
+
+```bash
+# Acessar asset
+curl -s -b $JAR "$B/api/files/{id}/video/final.mp4" -o video.mp4
+
+# Download forçado
+curl -s -b $JAR "$B/api/files/{id}/thumbs/capa.png?download" -o capa.png
+```
+
 ## Docker
 
 O `Dockerfile` (standalone, usuário `node`) e o `docker-compose.yml` da Fase 0
