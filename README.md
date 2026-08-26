@@ -181,6 +181,138 @@ lib/assets.ts            # scan/classificação/sanitização de arquivos
 - Servidor de arquivos confinado ao `OUTPUT_DIR` (traversal bloqueado);
 - Senhas com bcrypt (12 rounds); sessões JWT assinadas com `AUTH_SECRET`.
 
+## API — Referência das rotas
+
+Todas as rotas retornam JSON. Exceto indicado, exigem sessão autenticada.
+
+### Autenticação
+
+| Método | Rota | Autenticação | Descrição |
+|--------|------|-------------|-----------|
+| `GET/POST` | `/api/auth/[...nextauth]` | pública | Handlers do Auth.js (login, sessão, CSRF) |
+
+### Prompts (biblioteca)
+
+| Método | Rota | Body | Descrição |
+|--------|------|------|-----------|
+| `GET` | `/api/prompts?q=&type=` | — | Lista prompts. Filtros opcionais: `q` (busca), `type` (video/music/image/description) |
+| `POST` | `/api/prompts` | `{ name, content, type, tags? }` | Cria prompt. Nome deve ser único. |
+| `GET` | `/api/prompts/[id]` | — | Retorna um prompt pelo ID |
+| `PUT` | `/api/prompts/[id]` | `{ name?, content?, type?, tags? }` | Atualiza prompt. Campos opcionais. |
+| `DELETE` | `/api/prompts/[id]` | — | Remove prompt. Retorna 204. |
+
+### Execuções
+
+| Método | Rota | Body | Descrição |
+|--------|------|------|-----------|
+| `GET` | `/api/executions` | — | Lista todas as execuções (mais recentes primeiro) |
+| `POST` | `/api/executions` | `{ promptId }` OU `{ promptText }` | Cria execução e dispara N8N. Exige exatamente uma origem. |
+| `PATCH` | `/api/executions/[id]` | `{ title?, description? }` | Edita título/descrição (pós-geração) |
+
+**POST /api/executions** — Exemplos:
+
+```jsonc
+// Usando prompt da biblioteca
+{ "promptId": 42 }
+
+// Texto livre
+{ "promptText": "Crie um video animado sobre a historia do Brasil" }
+
+// Com título opcional
+{ "promptText": "...", "title": "Meu video custom" }
+```
+
+Resposta (201):
+```json
+{
+  "execution": {
+    "id": "b9b96c29-...",
+    "status": "running",
+    "promptText": "Crie um video...",
+    "createdAt": "2026-08-26T..."
+  }
+}
+```
+
+### Assets (por execução)
+
+| Método | Rota | Body | Descrição |
+|--------|------|------|-----------|
+| `PATCH` | `/api/executions/[id]/assets/[assetId]` | `{ approvalStatus }` | Aprova/rejeita um asset |
+| `POST` | `/api/executions/[id]/approve` | — | Aprova todos os assets pendentes da execução |
+
+**PATCH /api/executions/[id]/assets/[assetId]** — Valores de `approvalStatus`:
+- `"pending"` — pendente (padrão)
+- `"approved"` — aprovado
+- `"rejected"` — rejeitado
+
+### Callback N8N (sem sessão, autenticação por segredo)
+
+| Método | Rota | Header | Body | Descrição |
+|--------|------|--------|------|-----------|
+| `POST` | `/api/executions/[id]/callback` | `x-callback-secret` | `{ status, error?, assets? }` | Callback de conclusão/falha do N8N |
+| `POST` | `/api/executions/[id]/provision` | `x-callback-secret` | — | Cria 4 assets fake no disco (teste) |
+
+**POST /api/executions/[id]/callback** — Contrato:
+
+```jsonc
+// Sucesso (assets varridos do disco automaticamente)
+{ "status": "completed" }
+
+// Sucesso (assets explícitos)
+{
+  "status": "completed",
+  "assets": [
+    { "type": "video",    "filePath": "video/final.mp4" },
+    { "type": "thumb",    "filePath": "thumbs/capa.png" },
+    { "type": "music",    "filePath": "music/trilha.mp3" },
+    { "type": "description", "filePath": "descriptions/desc.txt" }
+  ]
+}
+
+// Falha
+{ "status": "failed", "error": "ComfyUI fora do ar" }
+```
+
+Autenticação via header:
+```
+x-callback-secret: {N8N_CALLBACK_SECRET}
+# ou
+Authorization: Bearer {N8N_CALLBACK_SECRET}
+```
+
+**POST /api/executions/[id]/provision** — Cria arquivos fake para teste:
+```
+video/final.mp4, thumbs/capa.png, music/trilha.mp3, descriptions/descricao.txt
+```
+
+### Arquivos (streaming)
+
+| Método | Rota | Autenticação | Descrição |
+|--------|------|-------------|-----------|
+| `GET/HEAD` | `/api/files/[...path]` | sessão | Serve arquivos de `OUTPUT_DIR` com suporte a Range (206) |
+
+O caminho é relativo a `OUTPUT_DIR`. Exemplo:
+```
+GET /api/files/{executionId}/video/final.mp4
+```
+
+Suporta `?download` para forçar download e `Range: bytes=0-1023` para seek.
+
+### Resumo de autenticação por rota
+
+| Rota | Autenticação |
+|------|-------------|
+| `/api/auth/*` | pública |
+| `/api/files/*` | sessão |
+| `/api/prompts/*` | sessão |
+| `/api/executions` (GET, POST) | sessão |
+| `/api/executions/[id]` (PATCH) | sessão |
+| `/api/executions/[id]/assets/*` | sessão |
+| `/api/executions/[id]/approve` | sessão |
+| `/api/executions/[id]/callback` | `x-callback-secret` |
+| `/api/executions/[id]/provision` | `x-callback-secret` |
+
 ## Docker
 
 O `Dockerfile` (standalone, usuário `node`) e o `docker-compose.yml` da Fase 0
