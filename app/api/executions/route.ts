@@ -11,14 +11,22 @@ import { getPrompt } from "@/db/queries/prompts";
 import { triggerN8N } from "@/lib/n8n";
 import {
   createExecutionSchema,
+  executionStatusFilterSchema,
   firstZodMessage,
 } from "@/lib/validation";
 
-export async function GET() {
+export async function GET(request: Request) {
   if (!(await auth())?.user) {
     return Response.json({ error: "Não autenticado" }, { status: 401 });
   }
-  const rows = await listExecutions();
+
+  const url = new URL(request.url);
+  const statusParam = url.searchParams.get("status") ?? undefined;
+  const parsedStatus = executionStatusFilterSchema.safeParse(statusParam);
+
+  const rows = await listExecutions({
+    status: parsedStatus.success ? parsedStatus.data : undefined,
+  });
   return Response.json({ executions: rows });
 }
 

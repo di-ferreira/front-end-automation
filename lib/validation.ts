@@ -126,6 +126,56 @@ export const assetApprovalSchema = z.object({
   approvalStatus: z.enum(APPROVAL_STATUSES),
 });
 
+// ---------------------------------------------------------------------------
+// Usuários
+// ---------------------------------------------------------------------------
+
+export const USER_ROLES = ["admin", "editor", "viewer"] as const;
+export type UserRole = (typeof USER_ROLES)[number];
+
+export const USER_ROLE_LABELS: Record<UserRole, string> = {
+  admin: "Administrador",
+  editor: "Editor",
+  viewer: "Visualizador",
+};
+
+export const createUserSchema = z.object({
+  name: z.string().trim().min(1, "Informe o nome").max(100, "Nome muito longo"),
+  email: z.string().trim().email("E-mail inválido").max(255),
+  password: z
+    .string()
+    .min(6, "Senha deve ter no mínimo 6 caracteres")
+    .max(100, "Senha muito longa"),
+  role: z.enum(USER_ROLES).default("viewer"),
+});
+
+export const updateUserSchema = z
+  .object({
+    name: z.string().trim().min(1, "Nome não pode ficar vazio").max(100).optional(),
+    email: z.string().trim().email("E-mail inválido").max(255).optional(),
+    password: z
+      .string()
+      .min(6, "Senha deve ter no mínimo 6 caracteres")
+      .max(100)
+      .optional(),
+    role: z.enum(USER_ROLES).optional(),
+  })
+  .refine(
+    (data) => Object.keys(data).length > 0,
+    { message: "Envie ao menos um campo para atualizar" },
+  );
+
+export type CreateUserInput = z.infer<typeof createUserSchema>;
+export type UpdateUserInput = z.infer<typeof updateUserSchema>;
+
+// ---------------------------------------------------------------------------
+// Execuções — filtros
+// ---------------------------------------------------------------------------
+
+export const executionStatusFilterSchema = z
+  .enum(["queued", "running", "completed", "failed"])
+  .optional();
+
 /** Primeiro erro legível de um ZodError (v4: issues[].message). */
 export function firstZodMessage(error: z.ZodError): string {
   return error.issues[0]?.message ?? "Dados inválidos";

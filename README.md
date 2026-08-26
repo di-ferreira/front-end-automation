@@ -191,6 +191,31 @@ Todas as rotas retornam JSON. Exceto indicado, exigem sessão autenticada.
 |--------|------|-------------|-----------|
 | `GET/POST` | `/api/auth/[...nextauth]` | pública | Handlers do Auth.js (login, sessão, CSRF) |
 
+### Usuários (admin)
+
+| Método | Rota | Body | Descrição |
+|--------|------|------|-----------|
+| `GET` | `/api/users` | — | Lista todos os usuários (sem passwordHash) |
+| `POST` | `/api/users` | `{ name, email, password, role? }` | Cria usuário. E-mail único. |
+| `GET` | `/api/users/[id]` | — | Retorna um usuário pelo ID |
+| `PUT` | `/api/users/[id]` | `{ name?, email?, password?, role? }` | Atualiza usuário. Campos opcionais. |
+| `DELETE` | `/api/users/[id]` | — | Remove usuário. Retorna 204. |
+
+> Rotas de usuário exigem `role: "admin"`. Um admin não pode deletar a si mesmo.
+
+**POST /api/users** — Exemplo:
+
+```json
+{
+  "name": "Maria Silva",
+  "email": "maria@example.com",
+  "password": "minha-senha-123",
+  "role": "editor"
+}
+```
+
+Valores de `role`: `"admin"` | `"editor"` | `"viewer"` (padrão: `"viewer"`)
+
 ### Prompts (biblioteca)
 
 | Método | Rota | Body | Descrição |
@@ -203,11 +228,20 @@ Todas as rotas retornam JSON. Exceto indicado, exigem sessão autenticada.
 
 ### Execuções
 
-| Método | Rota | Body | Descrição |
-|--------|------|------|-----------|
-| `GET` | `/api/executions` | — | Lista todas as execuções (mais recentes primeiro) |
+| Método | Rota | Body/Query | Descrição |
+|--------|------|-----------|-----------|
+| `GET` | `/api/executions?status=` | — | Lista execuções. Filtro: `queued`, `running`, `completed`, `failed` |
 | `POST` | `/api/executions` | `{ promptId }` OU `{ promptText }` | Cria execução e dispara N8N. Exige exatamente uma origem. |
 | `PATCH` | `/api/executions/[id]` | `{ title?, description? }` | Edita título/descrição (pós-geração) |
+
+**GET /api/executions** — Exemplos:
+
+```
+GET /api/executions              # todas
+GET /api/executions?status=completed   # apenas concluídas
+GET /api/executions?status=failed      # apenas falhas
+GET /api/executions?status=running     # em execução
+```
 
 **POST /api/executions** — Exemplos:
 
@@ -304,6 +338,7 @@ Suporta `?download` para forçar download e `Range: bytes=0-1023` para seek.
 | Rota | Autenticação |
 |------|-------------|
 | `/api/auth/*` | pública |
+| `/api/users/*` | sessão + `role: admin` |
 | `/api/files/*` | sessão |
 | `/api/prompts/*` | sessão |
 | `/api/executions` (GET, POST) | sessão |

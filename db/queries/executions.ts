@@ -1,9 +1,10 @@
 import { randomUUID } from "node:crypto";
 
-import { desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 
 import { db } from "@/db";
 import { executions, prompts, type ExecutionRow } from "@/db/schema";
+import type { ExecutionStatus } from "@/lib/validation";
 
 export interface ExecutionWithPrompt extends ExecutionRow {
   promptName: string | null;
@@ -45,8 +46,13 @@ export async function getExecution(
 }
 
 export async function listExecutions(
-  limit = 50,
+  options?: { status?: ExecutionStatus; limit?: number },
 ): Promise<ExecutionWithPrompt[]> {
+  const limit = options?.limit ?? 50;
+  const filters = [
+    options?.status ? eq(executions.status, options.status) : undefined,
+  ].filter(Boolean);
+
   const rows = await db
     .select({
       execution: executions,
@@ -54,6 +60,7 @@ export async function listExecutions(
     })
     .from(executions)
     .leftJoin(prompts, eq(executions.promptId, prompts.id))
+    .where(filters.length > 0 ? and(...filters) : undefined)
     .orderBy(desc(executions.createdAt))
     .limit(limit);
 
