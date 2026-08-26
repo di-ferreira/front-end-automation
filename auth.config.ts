@@ -19,9 +19,9 @@ export const authConfig = {
 
       const isLoginPage = pathname.startsWith("/login");
       const isAuthApi = pathname.startsWith("/api/auth");
-      // Callback do N8N autentica por segredo próprio na rota
+      // Callback/provision do N8N autenticam por segredo próprio na rota
       const isN8nCallback =
-        /^\/api\/executions\/[^/]+\/callback$/.test(pathname);
+        /^\/api\/executions\/[^/]+\/(callback|provision)$/.test(pathname);
 
       if (isAuthApi || isN8nCallback) return true;
 
