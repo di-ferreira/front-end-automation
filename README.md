@@ -1,36 +1,188 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Painel de Automação de Vídeos YouTube
 
-## Getting Started
+Painel web (Next.js) que dispara uma automação no **N8N** para gerar assets de
+vídeo (descrição, música, imagens/thumbnail e vídeo via ComfyUI), exibe a
+galeria dos arquivos gerados e gerencia a **revisão/aprovação** do conteúdo e a
+**biblioteca de prompts** reutilizáveis.
 
-First, run the development server:
+## Stack
+
+- Next.js 16 (App Router, proxy/middleware) · React 19 · TypeScript
+- Tailwind CSS v4 + shadcn/ui (base-ui)
+- Drizzle ORM — **banco trocável**: SQLite / PostgreSQL / MySQL
+- Auth.js v5 (credentials + bcrypt, sessão JWT)
+
+## Status das fases
+
+| Fase | Escopo | Status |
+|------|--------|--------|
+| 0 | Fundação Next.js + Tailwind + shadcn/ui | ✅ |
+| 1 | Banco de dados multi-dialeto + autenticação | ✅ |
+| 2 | Biblioteca de prompts (CRUD + filtros + busca) | ✅ |
+| 3 | Disparo da automação via webhook N8N | ✅ |
+| 4 | Callback de status + registro de assets + polling | ✅ |
+| 5 | Galeria de assets (players, lightbox, download) | ✅ |
+| 6 | Título/descrição + aprovação com histórico | ✅ |
+| 7 | Polimento e documentação | ✅ |
+
+> Detalhes de cada fase em [TODO_LIST.md](./TODO_LIST.md).
+
+## Rodando localmente (sem Docker)
+
+Requisitos: Node.js 20+ (testado no 24) e npm.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+
+# banco (SQLite local, não precisa de servidor)
+npm run db:migrate        # aplica migrations do provedor ativo
+npm run db:seed           # cria o usuário admin inicial
+
+# desenvolvimento
+npm run dev               # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Credenciais iniciais (definidas por `SEED_ADMIN_*` no `.env`):
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+admin@painel.local / trocar123
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Trocando o banco de dados
 
-## Learn More
+Defina `DB_PROVIDER` e `DATABASE_URL` no `.env` e rode `npm run db:migrate`.
+As migrations de cada dialeto ficam em `db/migrations/<dialeto>/`.
 
-To learn more about Next.js, take a look at the following resources:
+| Provider | DATABASE_URL exemplo | Observação |
+|----------|----------------------|------------|
+| `sqlite` *(padrão)* | `./data/app.db` | zero configuração; ideal p/ dev local |
+| `postgres` | `postgresql://usuario:senha@host:5432/banco` | driver postgres.js |
+| `mysql` | `mysql://usuario:senha@host:3306/painel` | driver mysql2 |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Scripts úteis:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run db:generate            # gera migration p/ o provedor ativo
+npm run db:generate:pg         # força um dialeto específico
+npm run db:migrate             # aplica migrations do provedor ativo
+npm run db:seed                # cria admin se não existir
+npm run db:studio              # drizzle-kit studio (inspeção visual)
+```
 
-## Deploy on Vercel
+## Variáveis de ambiente
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Copie `.env.example` para `.env` e ajuste:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Variável | Padrão dev | Descrição |
+|----------|-----------|-----------|
+| `DB_PROVIDER` | `sqlite` | `sqlite` \| `postgres` \| `mysql` |
+| `DATABASE_URL` | `./data/app.db` | arquivo ou URL conforme o provider |
+| `AUTH_SECRET` | — | segredo das sessões JWT (obrigatório) |
+| `AUTH_TRUST_HOST` | `true` | necessário fora da Vercel |
+| `SEED_ADMIN_EMAIL/NAME/PASSWORD` | `admin@painel.local` | usuário criado pelo seed |
+| `N8N_WEBHOOK_URL` | — | webhook inicial do workflow (Fase disparo) |
+| `N8N_API_KEY` | vazia | se definida, vai como `Authorization: Bearer` |
+| `N8N_CALLBACK_SECRET` | — | segredo compartilhado do callback de status |
+| `OUTPUT_DIR` | `./output` | pasta onde o N8N grava os assets |
+
+## Contrato painel ↔ N8N
+
+### 1. Disparo — painel → N8N
+
+Ao clicar em "Nova geração", o painel faz:
+
+```
+POST {N8N_WEBHOOK_URL}
+Authorization: Bearer {N8N_API_KEY}   # opcional
+Content-Type: application/json
+
+{ "executionId": "<uuid>", "prompt": "<texto do prompt>" }
+```
+
+O workflow deve estar configurado como **respond immediately** (o painel não
+espera a geração terminar). Falha de rede/timeout (10s)/status ≠ 2xx marca a
+execução como `failed` com a mensagem do erro.
+
+### 2. Convenção de saída — N8N → disco
+
+Salve os assets em subpastas por execução (a pasta define o tipo):
+
+```
+{OUTPUT_DIR}/{executionId}/
+├── video/final.mp4          → tipo "video"
+├── thumbs/capa.jpg          → tipo "thumb"
+├── music/trilha.mp3         → tipo "music"
+├── images/cena01.png        → tipo "image"
+├── descriptions/desc.txt    → tipo "description"
+└── metadata.json            → ignorado pelo scanner (uso livre do workflow)
+```
+
+Tipos também são inferidos por extensão quando o arquivo fica na raiz.
+
+### 3. Callback de status — N8N → painel
+
+Ao concluir (ou falhar), o último nó HTTP do workflow chama:
+
+```
+POST {PAINEL_URL}/api/executions/{executionId}/callback
+x-callback-secret: {N8N_CALLBACK_SECRET}     # ou Authorization: Bearer <segredo>
+Content-Type: application/json
+
+{ "status": "completed" }
+```
+
+- Sem `"assets"`, o painel **varre a pasta** `{OUTPUT_DIR}/{executionId}` e
+  registra tudo que encontrar;
+- Ou envie explicitamente:
+  `{ "status": "completed", "assets": [{ "type": "video", "filePath": "video/final.mp4" }] }`
+  (caminhos relativos à execução; `../` é rejeitado);
+- Para falhas: `{ "status": "failed", "error": "motivo" }`;
+- Reenviar o callback **substitui** os assets e zera aprovações (nova revisão).
+
+A UI atualiza sozinha (polling de 5s enquanto houver execuções ativas).
+
+## Fluxo de uso
+
+1. **Login** (`/login`) — credenciais do banco.
+2. **Prompts** (`/prompts`) — cadastre prompts reutilizáveis por tipo
+   (música, imagem, descrição, vídeo) com tags e histórico de uso.
+3. **Execuções** (`/`) — "Nova geração": escolha um prompt da biblioteca OU
+   digite texto livre; acompanhe o status (fila → executando → concluído/falhou).
+4. **Detalhe** (`/executions/{id}`) — galeria por tipo com players, lightbox,
+   download e copiar caminho/texto; edite título e descrição finais; aprove ou
+   rejeite cada asset (ou "aprovar todos"); veja o histórico de decisões.
+
+## Estrutura
+
+```
+app/
+├── (painel)/            # rotas protegidas (header/nav compartilhados)
+│   ├── page.tsx         # dashboard de execuções
+│   └── executions/[id]/ # detalhe + galeria + aprovações
+├── login/
+├── api/
+│   ├── auth/[...nextauth]/
+│   ├── prompts/[id]/    # CRUD de prompts
+│   ├── executions/[id]/ # PATCH texto, callback, aprovação
+│   └── files/[...path]/ # streaming com Range (auth por sessão)
+proxy.ts                 # ex-middleware: protege rotas, libera /login e callback
+db/
+├── schemas/{sqlite,pg,mysql}.ts   # mesmo schema nos 3 dialetos
+├── queries/             # consultas portáveis (sem dialect-only APIs)
+└── migrations/{sqlite,pg,mysql}/
+lib/n8n.ts               # dispatcher do webhook
+lib/assets.ts            # scan/classificação/sanitização de arquivos
+```
+
+## Segurança
+
+- Todas as rotas exigem sessão (exceto `/login`, `/api/auth/*` e o callback);
+- Callback autenticado por segredo compartilhado;
+- Servidor de arquivos confinado ao `OUTPUT_DIR` (traversal bloqueado);
+- Senhas com bcrypt (12 rounds); sessões JWT assinadas com `AUTH_SECRET`.
+
+## Docker
+
+O `Dockerfile` (standalone, usuário `node`) e o `docker-compose.yml` da Fase 0
+estão prontos e serão validados na entrega final, junto com a conexão à rede
+Docker existente (`infra_default`, onde rodam n8n/postgres).

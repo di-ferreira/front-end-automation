@@ -6,8 +6,8 @@
 >
 > **Regra:** concluir fase → commit → aguardar OK do usuário → iniciar próxima.
 > Marcar itens com [x] conforme conclusão.
-
 ## Status Geral (atualizado em 25/08/2026)
+
 | Fase | Nome | Status |
 |------|------|--------|
 | 0 | Fundação | ✅ Concluída |
@@ -17,7 +17,8 @@
 | 4 | Callback de Status e Saída | ✅ Concluída (painel) |
 | 5 | Galeria de Assets | ✅ Concluída |
 | 6 | Descrições e Aprovação | ✅ Concluída |
-| 7 | Polimento e Documentação | ⬜ Próxima |
+| 7 | Polimento e Documentação | ✅ Concluída |
+| — | Validação final em Docker | ⬜ Pendente (a pedido: só no fim) |
 
 **Pendências externas (infra N8N, não bloqueiam o painel):**
 - Criar workflow no N8N: webhook inicial `{ executionId, prompt }` (respond immediately) → geração → POST callback
@@ -175,10 +176,23 @@
 
 ## Fase 7 — Polimento e Documentação
 
-- [ ] Estados de loading, erro e vazio em todas as telas
-- [ ] Responsividade mobile/tablet
-- [ ] Revisão de textos PT-BR
-- [ ] README: setup, variáveis de ambiente, contrato N8N ↔ front
+- [x] Estados de loading, erro e vazio em todas as telas
+- [x] Responsividade mobile/tablet
+- [x] Revisão de textos PT-BR
+- [x] README: setup, variáveis de ambiente, contrato N8N ↔ front
 - [ ] (Fase 2 futura) Regeneração individual de assets
 
 **DoD:** projeto entregue documentado para uso diário.
+**Status:** concluída.
+
+> Notas da Fase 7:
+>
+> - loading.tsx (skeleton) e error.tsx (retry) no grupo do painel;
+>   not-found.tsx global estilizado
+> - Header empilha no mobile, paddings reduzidos, tabela de prompts com
+>   scroll horizontal garantido (min-w)
+> - README completo: setup local sem Docker, troca de banco por DB_PROVIDER,
+>   contrato painel ↔ N8N (webhook, pastas, callback), fluxo de uso, segurança
+>
+> **Próximo passo final:** validar Docker (build da imagem + compose na rede
+> `infra_default` + volume de saída) — único item pendente do escopo original.
