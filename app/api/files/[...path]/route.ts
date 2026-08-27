@@ -3,7 +3,7 @@ import { promises as fsp } from "node:fs";
 import { Readable } from "node:stream";
 
 import { mimeForFile, resolveWithinOutputDir } from "@/lib/assets";
-import { auth } from "@/auth";
+import { requireSession } from "@/lib/auth";
 
 type RouteContext = { params: Promise<{ path?: string[] }> };
 
@@ -12,9 +12,8 @@ function notFound() {
 }
 
 export async function GET(request: Request, context: RouteContext) {
-  if (!(await auth())?.user) {
-    return Response.json({ error: "Não autenticado" }, { status: 401 });
-  }
+  const { error } = await requireSession();
+  if (error) return error;
 
   const { path: segments = [] } = await context.params;
   const filePath = resolveWithinOutputDir(segments);

@@ -1,4 +1,4 @@
-import { auth } from "@/auth";
+import { requireSession } from "@/lib/auth";
 import {
   createExecution,
   getExecution,
@@ -16,9 +16,8 @@ import {
 } from "@/lib/validation";
 
 export async function GET(request: Request) {
-  if (!(await auth())?.user) {
-    return Response.json({ error: "Não autenticado" }, { status: 401 });
-  }
+  const { error } = await requireSession();
+  if (error) return error;
 
   const url = new URL(request.url);
   const statusParam = url.searchParams.get("status") ?? undefined;
@@ -31,9 +30,8 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  if (!(await auth())?.user) {
-    return Response.json({ error: "Não autenticado" }, { status: 401 });
-  }
+  const { error } = await requireSession();
+  if (error) return error;
 
   let body: unknown;
   try {
@@ -44,10 +42,7 @@ export async function POST(request: Request) {
 
   const parsed = createExecutionSchema.safeParse(body);
   if (!parsed.success) {
-    return Response.json(
-      { error: firstZodMessage(parsed.error) },
-      { status: 400 },
-    );
+    return Response.json({ error: firstZodMessage(parsed.error) }, { status: 400 });
   }
 
   let promptText = parsed.data.promptText;
@@ -58,10 +53,7 @@ export async function POST(request: Request) {
   if (parsed.data.promptId) {
     const prompt = await getPrompt(parsed.data.promptId);
     if (!prompt) {
-      return Response.json(
-        { error: "Prompt não encontrado" },
-        { status: 404 },
-      );
+      return Response.json({ error: "Prompt não encontrado" }, { status: 404 });
     }
     promptText = prompt.content;
     promptId = prompt.id;
@@ -88,8 +80,5 @@ export async function POST(request: Request) {
     await incrementPromptUse(promptId);
   }
 
-  return Response.json(
-    { execution: await getExecution(execution.id) },
-    { status: 201 },
-  );
+  return Response.json({ execution: await getExecution(execution.id) }, { status: 201 });
 }

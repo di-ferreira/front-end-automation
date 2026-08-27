@@ -1,20 +1,12 @@
-import { auth } from "@/auth";
+import { requireAdmin } from "@/lib/auth";
 import { getUser, updateUser, deleteUser } from "@/db/queries/users";
-import {
-  updateUserSchema,
-  firstZodMessage,
-} from "@/lib/validation";
+import { updateUserSchema, firstZodMessage } from "@/lib/validation";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
 export async function GET(_request: Request, context: RouteContext) {
-  const session = await auth();
-  if (!session?.user) {
-    return Response.json({ error: "Não autenticado" }, { status: 401 });
-  }
-  if (session.user.role !== "admin") {
-    return Response.json({ error: "Sem permissão" }, { status: 403 });
-  }
+  const { error } = await requireAdmin();
+  if (error) return error;
 
   const { id } = await context.params;
   const user = await getUser(Number(id));
@@ -26,13 +18,8 @@ export async function GET(_request: Request, context: RouteContext) {
 }
 
 export async function PUT(request: Request, context: RouteContext) {
-  const session = await auth();
-  if (!session?.user) {
-    return Response.json({ error: "Não autenticado" }, { status: 401 });
-  }
-  if (session.user.role !== "admin") {
-    return Response.json({ error: "Sem permissão" }, { status: 403 });
-  }
+  const { error } = await requireAdmin();
+  if (error) return error;
 
   const { id } = await context.params;
 
@@ -45,10 +32,7 @@ export async function PUT(request: Request, context: RouteContext) {
 
   const parsed = updateUserSchema.safeParse(body);
   if (!parsed.success) {
-    return Response.json(
-      { error: firstZodMessage(parsed.error) },
-      { status: 400 },
-    );
+    return Response.json({ error: firstZodMessage(parsed.error) }, { status: 400 });
   }
 
   const existing = await getUser(Number(id));
@@ -58,10 +42,7 @@ export async function PUT(request: Request, context: RouteContext) {
 
   const updated = await updateUser(Number(id), parsed.data);
   if (!updated) {
-    return Response.json(
-      { error: "Já existe um usuário com esse e-mail" },
-      { status: 409 },
-    );
+    return Response.json({ error: "Já existe um usuário com esse e-mail" }, { status: 409 });
   }
 
   const { passwordHash, ...safe } = updated;
@@ -69,22 +50,14 @@ export async function PUT(request: Request, context: RouteContext) {
 }
 
 export async function DELETE(_request: Request, context: RouteContext) {
-  const session = await auth();
-  if (!session?.user) {
-    return Response.json({ error: "Não autenticado" }, { status: 401 });
-  }
-  if (session.user.role !== "admin") {
-    return Response.json({ error: "Sem permissão" }, { status: 403 });
-  }
+  const { session, error } = await requireAdmin();
+  if (error) return error;
 
   const { id } = await context.params;
 
   // Não deixar deletar a si mesmo
-  if (String(session.user.id) === id) {
-    return Response.json(
-      { error: "Você não pode deletar seu próprio usuário" },
-      { status: 400 },
-    );
+  if (String(session!.user.id) === id) {
+    return Response.json({ error: "Você não pode deletar seu próprio usuário" }, { status: 400 });
   }
 
   const deleted = await deleteUser(Number(id));

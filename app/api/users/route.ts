@@ -1,18 +1,10 @@
-import { auth } from "@/auth";
+import { requireAdmin } from "@/lib/auth";
 import { listUsers, createUser, getUserByEmail } from "@/db/queries/users";
-import {
-  createUserSchema,
-  firstZodMessage,
-} from "@/lib/validation";
+import { createUserSchema, firstZodMessage } from "@/lib/validation";
 
 export async function GET() {
-  const session = await auth();
-  if (!session?.user) {
-    return Response.json({ error: "Não autenticado" }, { status: 401 });
-  }
-  if (session.user.role !== "admin") {
-    return Response.json({ error: "Sem permissão" }, { status: 403 });
-  }
+  const { error } = await requireAdmin();
+  if (error) return error;
 
   const rows = await listUsers();
   const safe = rows.map(({ passwordHash, ...rest }) => rest);
@@ -20,13 +12,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const session = await auth();
-  if (!session?.user) {
-    return Response.json({ error: "Não autenticado" }, { status: 401 });
-  }
-  if (session.user.role !== "admin") {
-    return Response.json({ error: "Sem permissão" }, { status: 403 });
-  }
+  const { error } = await requireAdmin();
+  if (error) return error;
 
   let body: unknown;
   try {
@@ -37,18 +24,12 @@ export async function POST(request: Request) {
 
   const parsed = createUserSchema.safeParse(body);
   if (!parsed.success) {
-    return Response.json(
-      { error: firstZodMessage(parsed.error) },
-      { status: 400 },
-    );
+    return Response.json({ error: firstZodMessage(parsed.error) }, { status: 400 });
   }
 
   const existing = await getUserByEmail(parsed.data.email);
   if (existing) {
-    return Response.json(
-      { error: "Já existe um usuário com esse e-mail" },
-      { status: 409 },
-    );
+    return Response.json({ error: "Já existe um usuário com esse e-mail" }, { status: 409 });
   }
 
   try {
@@ -57,9 +38,6 @@ export async function POST(request: Request) {
     return Response.json({ user: safe }, { status: 201 });
   } catch (error) {
     console.error("Erro ao criar usuário:", error);
-    return Response.json(
-      { error: "Erro interno ao criar o usuário" },
-      { status: 500 },
-    );
+    return Response.json({ error: "Erro interno ao criar o usuário" }, { status: 500 });
   }
 }

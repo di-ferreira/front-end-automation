@@ -1,38 +1,25 @@
 import { promises as fsp } from "node:fs";
 import path from "node:path";
 import { getExecution } from "@/db/queries/executions";
+import { requireSecret } from "@/lib/auth";
 
 type RouteContext = { params: Promise<{ id: string }> };
-
-function extractSecret(request: Request): string {
-  const header = request.headers.get("x-callback-secret");
-  if (header) return header.trim();
-  const auth = request.headers.get("authorization");
-  if (auth) return auth.replace(/^Bearer\s+/i, "").trim();
-  return "";
-}
 
 const FAKE_ASSETS: Record<string, string> = {
   "video/final.mp4": "conteudo de video fake para teste",
   "thumbs/capa.png": "png-fake",
   "music/trilha.mp3": "mp3-fake",
-  "descriptions/descricao.txt":
-    "Descricao gerada pelo workflow simulado do N8N.",
+  "descriptions/descricao.txt": "Descricao gerada pelo workflow simulado do N8N.",
 };
 
 export async function POST(request: Request, context: RouteContext) {
-  const expected = process.env.N8N_CALLBACK_SECRET?.trim() ?? "";
-  if (expected.length === 0 || extractSecret(request) !== expected) {
-    return Response.json({ error: "Segredo inválido" }, { status: 401 });
-  }
+  const secretError = requireSecret(request);
+  if (secretError) return secretError;
 
   const { id } = await context.params;
   const execution = await getExecution(id);
   if (!execution) {
-    return Response.json(
-      { error: "Execução não encontrada" },
-      { status: 404 },
-    );
+    return Response.json({ error: "Execução não encontrada" }, { status: 404 });
   }
 
   const outputDir = path.resolve(process.env.OUTPUT_DIR?.trim() || "./output");

@@ -1,39 +1,19 @@
-import {
-  getExecution,
-  markExecutionCompleted,
-  markExecutionFailed,
-} from "@/db/queries/executions";
+import { getExecution, markExecutionCompleted, markExecutionFailed } from "@/db/queries/executions";
 import { replaceExecutionAssets } from "@/db/queries/assets";
 import { collectAssetsFromDisk, sanitizeAssetPath } from "@/lib/assets";
-import {
-  executionCallbackSchema,
-  firstZodMessage,
-} from "@/lib/validation";
+import { executionCallbackSchema, firstZodMessage } from "@/lib/validation";
+import { requireSecret } from "@/lib/auth";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
-function extractSecret(request: Request): string {
-  const header = request.headers.get("x-callback-secret");
-  if (header) return header.trim();
-  const auth = request.headers.get("authorization");
-  if (auth) return auth.replace(/^Bearer\s+/i, "").trim();
-  return "";
-}
-
 export async function POST(request: Request, context: RouteContext) {
-  // Autenticação por segredo compartilhado (rota isenta de sessão no proxy)
-  const expected = process.env.N8N_CALLBACK_SECRET?.trim() ?? "";
-  if (expected.length === 0 || extractSecret(request) !== expected) {
-    return Response.json({ error: "Segredo inválido" }, { status: 401 });
-  }
+  const secretError = requireSecret(request);
+  if (secretError) return secretError;
 
   const { id } = await context.params;
   const execution = await getExecution(id);
   if (!execution) {
-    return Response.json(
-      { error: "Execução não encontrada" },
-      { status: 404 },
-    );
+    return Response.json({ error: "Execução não encontrada" }, { status: 404 });
   }
 
   let body: unknown;
@@ -45,10 +25,7 @@ export async function POST(request: Request, context: RouteContext) {
 
   const parsed = executionCallbackSchema.safeParse(body);
   if (!parsed.success) {
-    return Response.json(
-      { error: firstZodMessage(parsed.error) },
-      { status: 400 },
-    );
+    return Response.json({ error: firstZodMessage(parsed.error) }, { status: 400 });
   }
   const payload = parsed.data;
 
@@ -65,10 +42,7 @@ export async function POST(request: Request, context: RouteContext) {
         mimeType: asset.mimeType,
         sizeBytes: asset.sizeBytes,
       }))
-    : await collectAssetsFromDisk(
-        process.env.OUTPUT_DIR?.trim() || "./output",
-        execution.id,
-      );
+    : await collectAssetsFromDisk(process.env.OUTPUT_DIR?.trim() || "./output", execution.id);
 
   if (collected.some((asset) => asset.filePath === null)) {
     return Response.json(
