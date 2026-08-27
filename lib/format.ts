@@ -1,4 +1,4 @@
-import type { ExecutionStatus, PromptType } from "@/lib/validation";
+import type { ApprovalStatus, ExecutionStatus, PromptType } from "@/lib/validation";
 
 export const PROMPT_TYPE_BADGE_CLASSES: Record<PromptType, string> = {
   musica: "border-purple-200 bg-purple-50 text-purple-700",
@@ -12,6 +12,12 @@ export const EXECUTION_STATUS_BADGE_CLASSES: Record<ExecutionStatus, string> = {
   running: "border-sky-200 bg-sky-50 text-sky-700",
   completed: "border-emerald-200 bg-emerald-50 text-emerald-700",
   failed: "border-red-200 bg-red-50 text-red-700",
+};
+
+export const APPROVAL_STATUS_BADGE_CLASSES: Record<ApprovalStatus, string> = {
+  pending: "border-amber-200 bg-amber-50 text-amber-700",
+  approved: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  rejected: "border-red-200 bg-red-50 text-red-700",
 };
 
 /** Formata datas como "12 ago 2026, 14:30" no fuso local. */
@@ -61,4 +67,12 @@ export function formatDecision(iso: string): string {
     hour: "2-digit",
     minute: "2-digit",
   }).format(new Date(iso));
+}
+
+export function fileName(filePath: string): string {
+  return filePath.split("/").pop() ?? "";
+}
+
+export function relativePath(filePath: string): string {
+  return filePath.split("/").slice(1).join("/") || filePath;
 }

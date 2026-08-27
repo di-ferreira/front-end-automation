@@ -3,6 +3,9 @@ import path from "node:path";
 
 import type { AssetType } from "@/lib/validation";
 
+export const DEFAULT_OUTPUT_DIR = "./output";
+const MAX_WALK_DEPTH = 3;
+
 export interface CollectedAsset {
   type: AssetType;
   filePath: string; // relativo a OUTPUT_DIR, prefixado com executionId
@@ -73,9 +76,7 @@ export function mimeForFile(filePath: string): string | undefined {
  * Retorna o caminho absoluto ou null se escapar da pasta.
  */
 export function resolveWithinOutputDir(segments: string[]): string | null {
-  const outputDir = path.resolve(
-    process.env.OUTPUT_DIR?.trim() || "./output",
-  );
+  const outputDir = path.resolve(process.env.OUTPUT_DIR?.trim() || DEFAULT_OUTPUT_DIR);
   if (segments.some((segment) => !segment || segment === "." || segment === "..")) {
     return null;
   }
@@ -94,10 +95,7 @@ function extOf(filePath: string): string {
  * Normaliza o caminho vindo de fonte externa para um caminho RELATIVO
  * seguro dentro de OUTPUT_DIR/{executionId}. Retorna null se escapar.
  */
-export function sanitizeAssetPath(
-  executionId: string,
-  input: string,
-): string | null {
+export function sanitizeAssetPath(executionId: string, input: string): string | null {
   const segments = input
     .replaceAll("\\", "/")
     .split("/")
@@ -113,10 +111,7 @@ export function sanitizeAssetPath(
   return [executionId, ...segments].join("/");
 }
 
-function classify(
-  segments: string[],
-  fileName: string,
-): AssetType | null {
+function classify(segments: string[], fileName: string): AssetType | null {
   // 1. pasta (primeiro segmento após o id)
   for (const segment of segments) {
     const byFolder = TYPE_BY_FOLDER[segment.toLowerCase()];
@@ -141,7 +136,7 @@ async function walk(
   out: CollectedAsset[],
   depth: number,
 ): Promise<void> {
-  if (depth > 3) return;
+  if (depth > MAX_WALK_DEPTH) return;
 
   let entries;
   try {
@@ -160,9 +155,7 @@ async function walk(
     if (entry.name.toLowerCase() === "metadata.json") continue; // metadado, não asset
 
     // relativo ao OUTPUT_DIR: {executionId}/pasta/arquivo.ext
-    const relative = path
-      .relative(outputRoot, full)
-      .replaceAll("\\", "/");
+    const relative = path.relative(outputRoot, full).replaceAll("\\", "/");
     const segments = relative.split("/").slice(1); // ignora o próprio executionId
     const type = classify(segments, entry.name);
     if (!type) continue;

@@ -1,6 +1,7 @@
 import { requireSession } from "@/lib/auth";
 import { updateExecutionText } from "@/db/queries/executions";
 import { firstZodMessage, updateExecutionSchema } from "@/lib/validation";
+import { parseJsonBody } from "@/lib/api";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -10,12 +11,8 @@ export async function PATCH(request: Request, context: RouteContext) {
 
   const { id } = await context.params;
 
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return Response.json({ error: "JSON inválido" }, { status: 400 });
-  }
+  const { body, error: parseError } = await parseJsonBody(request);
+  if (parseError) return parseError;
 
   const parsed = updateExecutionSchema.safeParse(body);
   if (!parsed.success) {

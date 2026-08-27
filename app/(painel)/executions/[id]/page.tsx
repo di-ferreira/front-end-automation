@@ -1,7 +1,7 @@
 import { promises as fsp } from "node:fs";
 import { notFound } from "next/navigation";
 
-import { formatDateTime } from "@/lib/format";
+import { formatDateTime, relativePath } from "@/lib/format";
 import { getExecution } from "@/db/queries/executions";
 import { listExecutionAssetsDetailed } from "@/db/queries/assets";
 import { resolveWithinOutputDir } from "@/lib/assets";
@@ -67,7 +67,7 @@ export default async function ExecutionPage({ params }: { params: Promise<{ id: 
     .sort((a, b) => new Date(b.approvedAt!).getTime() - new Date(a.approvedAt!).getTime())
     .map((row) => ({
       assetId: row.id,
-      assetName: row.filePath.split("/").slice(1).join("/") || row.filePath,
+      assetName: relativePath(row.filePath),
       status: row.approvalStatus,
       who: row.approvedByName ?? "?",
       when: formatDateTime(row.approvedAt),

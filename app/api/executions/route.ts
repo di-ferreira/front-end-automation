@@ -14,6 +14,7 @@ import {
   executionStatusFilterSchema,
   firstZodMessage,
 } from "@/lib/validation";
+import { parseJsonBody } from "@/lib/api";
 
 export async function GET(request: Request) {
   const { error } = await requireSession();
@@ -33,12 +34,8 @@ export async function POST(request: Request) {
   const { error } = await requireSession();
   if (error) return error;
 
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return Response.json({ error: "JSON inválido" }, { status: 400 });
-  }
+  const { body, error: parseError } = await parseJsonBody(request);
+  if (parseError) return parseError;
 
   const parsed = createExecutionSchema.safeParse(body);
   if (!parsed.success) {

@@ -1,4 +1,5 @@
 import { APPROVAL_STATUS_LABELS, type ApprovalStatus } from "@/lib/validation";
+import { APPROVAL_STATUS_BADGE_CLASSES } from "@/lib/format";
 
 interface HistoryEntry {
   assetId: number;
@@ -27,11 +28,7 @@ export function ExecutionHistory({ entries }: ExecutionHistoryProps) {
             className="flex flex-wrap items-center gap-x-2 gap-y-1 px-4 py-2.5 text-xs"
           >
             <span
-              className={`inline-flex items-center rounded-full border px-2 py-0.5 font-medium ${
-                entry.status === "approved"
-                  ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                  : "border-red-200 bg-red-50 text-red-700"
-              }`}
+              className={`inline-flex items-center rounded-full border px-2 py-0.5 font-medium ${APPROVAL_STATUS_BADGE_CLASSES[entry.status]}`}
             >
               {APPROVAL_STATUS_LABELS[entry.status]}
             </span>

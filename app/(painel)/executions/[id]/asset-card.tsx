@@ -5,7 +5,14 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { APPROVAL_STATUS_LABELS, type ApprovalStatus, type AssetType } from "@/lib/validation";
 import { cn } from "@/lib/utils";
-import { fileUrl, formatBytes, formatDecision } from "@/lib/format";
+import {
+  fileUrl,
+  formatBytes,
+  formatDecision,
+  fileName,
+  relativePath,
+  APPROVAL_STATUS_BADGE_CLASSES,
+} from "@/lib/format";
 import { useClipboard } from "@/hooks/use-clipboard";
 
 export interface GalleryAsset {
@@ -20,12 +27,6 @@ export interface GalleryAsset {
   approvedByName?: string | null;
   approvedAt?: string | null;
 }
-
-const BADGE_CLASSES: Record<ApprovalStatus, string> = {
-  pending: "border-amber-200 bg-amber-50 text-amber-700",
-  approved: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  rejected: "border-red-200 bg-red-50 text-red-700",
-};
 
 const DECISION_VERB: Record<Exclude<ApprovalStatus, "pending">, string> = {
   approved: "Aprovado",
@@ -61,7 +62,7 @@ export function AssetCard({ asset, onOpenImage, onDecide }: AssetCardProps) {
     >
       <div className="bg-muted/30 relative flex min-h-40 flex-1 items-center justify-center">
         <span
-          className={`absolute top-2 right-2 z-10 inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium ${BADGE_CLASSES[asset.approvalStatus]}`}
+          className={`absolute top-2 right-2 z-10 inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium ${APPROVAL_STATUS_BADGE_CLASSES[asset.approvalStatus]}`}
         >
           {APPROVAL_STATUS_LABELS[asset.approvalStatus]}
         </span>
@@ -71,7 +72,7 @@ export function AssetCard({ asset, onOpenImage, onDecide }: AssetCardProps) {
             controls
             preload="metadata"
             src={fileUrl(asset.filePath)}
-            aria-label={`Video: ${asset.filePath.split("/").pop() ?? "asset"}`}
+            aria-label={`Video: ${fileName(asset.filePath)}`}
             className="aspect-video w-full"
           />
         ) : asset.type === "music" ? (
@@ -79,7 +80,7 @@ export function AssetCard({ asset, onOpenImage, onDecide }: AssetCardProps) {
             controls
             preload="metadata"
             src={fileUrl(asset.filePath)}
-            aria-label={`Audio: ${asset.filePath.split("/").pop() ?? "asset"}`}
+            aria-label={`Audio: ${fileName(asset.filePath)}`}
             className="w-full px-3"
           />
         ) : onOpenImage ? (
@@ -92,7 +93,7 @@ export function AssetCard({ asset, onOpenImage, onDecide }: AssetCardProps) {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={fileUrl(asset.filePath)}
-              alt={asset.filePath.split("/").pop() ?? ""}
+              alt={fileName(asset.filePath)}
               loading="lazy"
               className="aspect-video w-full object-cover transition-opacity hover:opacity-90"
             />
@@ -106,7 +107,7 @@ export function AssetCard({ asset, onOpenImage, onDecide }: AssetCardProps) {
 
       <div className="border-border space-y-2 border-t p-3">
         <p className="text-muted-foreground truncate text-xs" title={asset.filePath}>
-          {asset.filePath.split("/").slice(1).join("/") || asset.filePath}
+          {relativePath(asset.filePath)}
           {asset.sizeBytes ? ` \u00b7 ${formatBytes(asset.sizeBytes)}` : ""}
         </p>
 

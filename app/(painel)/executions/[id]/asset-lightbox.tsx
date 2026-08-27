@@ -8,7 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { fileUrl } from "@/lib/format";
+import { fileUrl, fileName } from "@/lib/format";
 import type { GalleryAsset } from "./asset-card";
 
 interface AssetLightboxProps {
@@ -28,7 +28,7 @@ export function AssetLightbox({ images, index, onClose, onNavigate }: AssetLight
           <>
             <DialogHeader>
               <DialogTitle className="truncate pr-8 text-sm">
-                {current.filePath.split("/").pop()}
+                {fileName(current.filePath)}
               </DialogTitle>
               <DialogDescription>
                 Imagem {(index ?? 0) + 1} de {images.length}

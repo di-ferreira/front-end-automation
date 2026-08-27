@@ -1,6 +1,7 @@
 import { requireAdmin } from "@/lib/auth";
 import { listUsers, createUser, getUserByEmail } from "@/db/queries/users";
 import { createUserSchema, firstZodMessage } from "@/lib/validation";
+import { parseJsonBody } from "@/lib/api";
 
 export async function GET() {
   const { error } = await requireAdmin();
@@ -15,12 +16,8 @@ export async function POST(request: Request) {
   const { error } = await requireAdmin();
   if (error) return error;
 
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return Response.json({ error: "JSON inválido" }, { status: 400 });
-  }
+  const { body, error: parseError } = await parseJsonBody(request);
+  if (parseError) return parseError;
 
   const parsed = createUserSchema.safeParse(body);
   if (!parsed.success) {

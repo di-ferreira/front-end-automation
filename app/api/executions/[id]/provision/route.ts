@@ -2,6 +2,7 @@ import { promises as fsp } from "node:fs";
 import path from "node:path";
 import { getExecution } from "@/db/queries/executions";
 import { requireSecret } from "@/lib/auth";
+import { DEFAULT_OUTPUT_DIR } from "@/lib/assets";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -22,7 +23,7 @@ export async function POST(request: Request, context: RouteContext) {
     return Response.json({ error: "Execução não encontrada" }, { status: 404 });
   }
 
-  const outputDir = path.resolve(process.env.OUTPUT_DIR?.trim() || "./output");
+  const outputDir = path.resolve(process.env.OUTPUT_DIR?.trim() || DEFAULT_OUTPUT_DIR);
   const execDir = path.join(outputDir, id);
 
   for (const [relPath, content] of Object.entries(FAKE_ASSETS)) {

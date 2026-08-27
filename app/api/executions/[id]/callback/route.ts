@@ -1,8 +1,9 @@
 import { getExecution, markExecutionCompleted, markExecutionFailed } from "@/db/queries/executions";
 import { replaceExecutionAssets } from "@/db/queries/assets";
-import { collectAssetsFromDisk, sanitizeAssetPath } from "@/lib/assets";
+import { collectAssetsFromDisk, sanitizeAssetPath, DEFAULT_OUTPUT_DIR } from "@/lib/assets";
 import { executionCallbackSchema, firstZodMessage } from "@/lib/validation";
 import { requireSecret } from "@/lib/auth";
+import { parseJsonBody } from "@/lib/api";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -16,12 +17,8 @@ export async function POST(request: Request, context: RouteContext) {
     return Response.json({ error: "Execução não encontrada" }, { status: 404 });
   }
 
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return Response.json({ error: "JSON inválido" }, { status: 400 });
-  }
+  const { body, error: parseError } = await parseJsonBody(request);
+  if (parseError) return parseError;
 
   const parsed = executionCallbackSchema.safeParse(body);
   if (!parsed.success) {
@@ -42,7 +39,10 @@ export async function POST(request: Request, context: RouteContext) {
         mimeType: asset.mimeType,
         sizeBytes: asset.sizeBytes,
       }))
-    : await collectAssetsFromDisk(process.env.OUTPUT_DIR?.trim() || "./output", execution.id);
+    : await collectAssetsFromDisk(
+        process.env.OUTPUT_DIR?.trim() || DEFAULT_OUTPUT_DIR,
+        execution.id,
+      );
 
   if (collected.some((asset) => asset.filePath === null)) {
     return Response.json(

@@ -1,3 +1,5 @@
+const N8N_TIMEOUT_MS = 10_000;
+
 export interface N8NDispatchResult {
   ok: boolean;
   error?: string;
@@ -7,10 +9,7 @@ export interface N8NDispatchResult {
  * Dispara o workflow N8N com o contrato { executionId, prompt }.
  * O webhook deve responder imediatamente (respond: immediately).
  */
-export async function triggerN8N(
-  executionId: string,
-  prompt: string,
-): Promise<N8NDispatchResult> {
+export async function triggerN8N(executionId: string, prompt: string): Promise<N8NDispatchResult> {
   const url = process.env.N8N_WEBHOOK_URL?.trim();
   if (!url) {
     return { ok: false, error: "N8N_WEBHOOK_URL não configurada" };
@@ -29,7 +28,7 @@ export async function triggerN8N(
       method: "POST",
       headers,
       body: JSON.stringify({ executionId, prompt }),
-      signal: AbortSignal.timeout(10_000),
+      signal: AbortSignal.timeout(N8N_TIMEOUT_MS),
     });
     if (!response.ok) {
       return {

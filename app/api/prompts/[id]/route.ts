@@ -1,6 +1,7 @@
 import { requireSession } from "@/lib/auth";
 import { deletePrompt, getPrompt, isUniqueViolation, updatePrompt } from "@/db/queries/prompts";
 import { firstZodMessage, updatePromptSchema } from "@/lib/validation";
+import { parseJsonBody } from "@/lib/api";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -22,12 +23,8 @@ export async function PUT(request: Request, context: RouteContext) {
   const { id } = await context.params;
   const numericId = Number(id);
 
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return Response.json({ error: "JSON inválido" }, { status: 400 });
-  }
+  const { body, error: parseError } = await parseJsonBody(request);
+  if (parseError) return parseError;
 
   const parsed = updatePromptSchema.safeParse(body);
   if (!parsed.success) {

@@ -1,6 +1,7 @@
 import { setAssetApproval } from "@/db/queries/assets";
 import { assetApprovalSchema, firstZodMessage } from "@/lib/validation";
 import { requireSession } from "@/lib/auth";
+import { parseJsonBody } from "@/lib/api";
 
 type RouteContext = { params: Promise<{ id: string; assetId: string }> };
 
@@ -10,12 +11,8 @@ export async function PATCH(request: Request, context: RouteContext) {
 
   const { id, assetId } = await context.params;
 
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return Response.json({ error: "JSON inválido" }, { status: 400 });
-  }
+  const { body, error: parseError } = await parseJsonBody(request);
+  if (parseError) return parseError;
 
   const parsed = assetApprovalSchema.safeParse(body);
   if (!parsed.success) {
