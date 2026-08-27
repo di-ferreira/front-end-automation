@@ -71,6 +71,7 @@ export function AssetCard({ asset, onOpenImage, onDecide }: AssetCardProps) {
             controls
             preload="metadata"
             src={fileUrl(asset.filePath)}
+            aria-label={`Video: ${asset.filePath.split("/").pop() ?? "asset"}`}
             className="aspect-video w-full"
           />
         ) : asset.type === "music" ? (
@@ -78,6 +79,7 @@ export function AssetCard({ asset, onOpenImage, onDecide }: AssetCardProps) {
             controls
             preload="metadata"
             src={fileUrl(asset.filePath)}
+            aria-label={`Audio: ${asset.filePath.split("/").pop() ?? "asset"}`}
             className="w-full px-3"
           />
         ) : onOpenImage ? (

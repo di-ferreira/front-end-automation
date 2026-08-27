@@ -13,6 +13,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ErrorMessage } from "@/components/error-message";
 import { PROMPT_TYPES, PROMPT_TYPE_LABELS } from "@/lib/validation";
 import { useDialogForm } from "@/hooks/use-dialog-form";
@@ -86,18 +93,18 @@ export function PromptFormDialog({ prompt, label }: PromptFormDialogProps) {
 
           <div className="space-y-2">
             <Label htmlFor={`type-${prompt?.id ?? "novo"}`}>Tipo</Label>
-            <select
-              id={`type-${prompt?.id ?? "novo"}`}
-              name="type"
-              defaultValue={prompt?.type ?? "descricao"}
-              className="border-border bg-background focus-visible:border-ring focus-visible:ring-ring/50 h-9 w-full rounded-lg border px-3 text-sm transition-colors outline-none focus-visible:ring-3"
-            >
-              {PROMPT_TYPES.map((type) => (
-                <option key={type} value={type}>
-                  {PROMPT_TYPE_LABELS[type]}
-                </option>
-              ))}
-            </select>
+            <Select defaultValue={prompt?.type ?? "descricao"}>
+              <SelectTrigger id={`type-${prompt?.id ?? "novo"}`} name="type" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PROMPT_TYPES.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {PROMPT_TYPE_LABELS[type]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">

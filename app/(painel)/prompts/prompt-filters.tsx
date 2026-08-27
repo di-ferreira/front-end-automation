@@ -5,9 +5,13 @@ import { useState } from "react";
 
 import { Input } from "@/components/ui/input";
 import {
-  PROMPT_TYPES,
-  PROMPT_TYPE_LABELS,
-} from "@/lib/validation";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { PROMPT_TYPES, PROMPT_TYPE_LABELS } from "@/lib/validation";
 
 export function PromptFilters() {
   const router = useRouter();
@@ -39,24 +43,25 @@ export function PromptFilters() {
     >
       <Input
         type="search"
-        placeholder="Buscar por nome, conteúdo ou tags..."
+        placeholder="Buscar por nome, conteudo ou tags..."
+        aria-label="Buscar prompts"
         value={q}
         onChange={(event) => setQDraft(event.target.value)}
         className="sm:w-80"
       />
-      <select
-        aria-label="Filtrar por tipo"
-        className="border-border bg-background focus-visible:border-ring focus-visible:ring-ring/50 h-9 rounded-lg border px-3 text-sm transition-colors outline-none focus-visible:ring-3"
-        value={currentType}
-        onChange={(event) => applyFilters(q, event.target.value)}
-      >
-        <option value="">Todos os tipos</option>
-        {PROMPT_TYPES.map((type) => (
-          <option key={type} value={type}>
-            {PROMPT_TYPE_LABELS[type]}
-          </option>
-        ))}
-      </select>
+      <Select value={currentType} onValueChange={(value) => applyFilters(q, value ?? "")}>
+        <SelectTrigger aria-label="Filtrar por tipo" className="w-auto">
+          <SelectValue placeholder="Todos os tipos" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="">Todos os tipos</SelectItem>
+          {PROMPT_TYPES.map((type) => (
+            <SelectItem key={type} value={type}>
+              {PROMPT_TYPE_LABELS[type]}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </form>
   );
 }

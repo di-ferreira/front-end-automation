@@ -15,6 +15,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ErrorMessage } from "@/components/error-message";
 import { FilterTabs } from "@/components/filter-tabs";
 import { PROMPT_TYPE_LABELS, type PromptType } from "@/lib/validation";
@@ -128,27 +135,31 @@ export function NewExecutionDialog() {
           {mode === "biblioteca" ? (
             <div className="space-y-2">
               <Label htmlFor="exec-prompt">Prompt da biblioteca</Label>
-              <select
-                id="exec-prompt"
+              <Select
                 value={promptId}
-                onChange={(event) => setPromptId(event.target.value)}
+                onValueChange={(value) => setPromptId(value ?? "")}
                 disabled={loadingPrompts}
-                className="border-border bg-background focus-visible:border-ring focus-visible:ring-ring/50 h-9 w-full rounded-lg border px-3 text-sm transition-colors outline-none focus-visible:ring-3 disabled:opacity-50"
                 required
               >
-                <option value="">
-                  {loadingPrompts
-                    ? "Carregando prompts..."
-                    : promptOptions.length === 0
-                      ? "Nenhum prompt cadastrado"
-                      : "Escolha um prompt"}
-                </option>
-                {promptOptions.map((option) => (
-                  <option key={option.id} value={option.id}>
-                    [{PROMPT_TYPE_LABELS[option.type]}] {option.name}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger id="exec-prompt" className="w-full">
+                  <SelectValue
+                    placeholder={
+                      loadingPrompts
+                        ? "Carregando prompts..."
+                        : promptOptions.length === 0
+                          ? "Nenhum prompt cadastrado"
+                          : "Escolha um prompt"
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {promptOptions.map((option) => (
+                    <SelectItem key={option.id} value={String(option.id)}>
+                      [{PROMPT_TYPE_LABELS[option.type]}] {option.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               {selectedPreview(promptOptions, promptId) ? (
                 <p className="text-muted-foreground bg-muted/50 line-clamp-3 rounded-lg px-3 py-2 text-xs leading-5">
                   {selectedPreview(promptOptions, promptId)}
