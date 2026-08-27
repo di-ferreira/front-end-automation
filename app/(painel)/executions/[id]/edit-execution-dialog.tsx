@@ -1,8 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -17,6 +14,7 @@ import { ErrorMessage } from "@/components/error-message";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useDialogForm } from "@/hooks/use-dialog-form";
 
 interface EditExecutionDialogProps {
   executionId: string;
@@ -29,43 +27,22 @@ export function EditExecutionDialog({
   initialTitle,
   initialDescription,
 }: EditExecutionDialogProps) {
-  const router = useRouter();
-  const [open, setOpen] = useState(false);
-  const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { open, pending, error, handleOpenChange, handleSubmit } = useDialogForm();
 
-  function handleOpenChange(nextOpen: boolean) {
-    setOpen(nextOpen);
-    if (!nextOpen) setError(null);
-  }
-
-  async function handleSubmit(formData: FormData) {
-    setPending(true);
-    setError(null);
-    try {
-      const response = await fetch(`/api/executions/${executionId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: formData.get("title"),
-          description: formData.get("description") ?? "",
+  function onSubmit(formData: FormData) {
+    return handleSubmit(
+      formData,
+      (fd) =>
+        fetch(`/api/executions/${executionId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: fd.get("title"),
+            description: fd.get("description") ?? "",
+          }),
         }),
-      });
-
-      if (response.ok) {
-        setOpen(false);
-        router.refresh();
-        return;
-      }
-      const data = (await response.json().catch(() => ({}))) as {
-        error?: string;
-      };
-      setError(data.error ?? "Não foi possível salvar.");
-    } catch {
-      setError("Falha de conexão. Tente novamente.");
-    } finally {
-      setPending(false);
-    }
+      "Nao foi possivel salvar.",
+    );
   }
 
   return (
@@ -79,39 +56,44 @@ export function EditExecutionDialog({
       />
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Editar título e descrição</DialogTitle>
-          <DialogDescription>Texto final que será usado na publicação do vídeo.</DialogDescription>
+          <DialogTitle>Editar titulo e descricao</DialogTitle>
+          <DialogDescription>Texto final que sera usado na publicacao do video.</DialogDescription>
         </DialogHeader>
 
-        <form action={handleSubmit} className="space-y-4">
+        <form action={onSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="exec-edit-title">Título</Label>
+            <Label htmlFor="exec-edit-title">Titulo</Label>
             <Input
               id="exec-edit-title"
               name="title"
               maxLength={500}
               defaultValue={initialTitle ?? ""}
-              placeholder="Título do vídeo no YouTube"
+              placeholder="Titulo do video no YouTube"
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="exec-edit-description">Descrição</Label>
+            <Label htmlFor="exec-edit-description">Descricao</Label>
             <Textarea
               id="exec-edit-description"
               name="description"
               rows={8}
               maxLength={5000}
               defaultValue={initialDescription ?? ""}
-              placeholder="Descrição do vídeo..."
+              placeholder="Descricao do video..."
             />
           </div>
 
           <ErrorMessage message={error} />
 
           <DialogFooter>
-            <Button type="button" variant="ghost" onClick={() => setOpen(false)} disabled={pending}>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => handleOpenChange(false)}
+              disabled={pending}
+            >
               Cancelar
             </Button>
             <Button type="submit" disabled={pending}>

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { APPROVAL_STATUS_LABELS, type ApprovalStatus, type AssetType } from "@/lib/validation";
 import { cn } from "@/lib/utils";
 import { fileUrl, formatBytes, formatDecision } from "@/lib/format";
+import { useClipboard } from "@/hooks/use-clipboard";
 
 export interface GalleryAsset {
   id: number;
@@ -38,18 +39,8 @@ interface AssetCardProps {
 }
 
 export function AssetCard({ asset, onOpenImage, onDecide }: AssetCardProps) {
-  const [copied, setCopied] = useState<"path" | "text" | null>(null);
+  const { copied, copy } = useClipboard();
   const [pendingDecision, setPendingDecision] = useState(false);
-
-  async function copy(value: string, kind: "path" | "text") {
-    try {
-      await navigator.clipboard.writeText(value);
-      setCopied(kind);
-      setTimeout(() => setCopied(null), 2000);
-    } catch {
-      // clipboard indisponivel (ex.: HTTP nao seguro)
-    }
-  }
 
   async function runDecision(status: ApprovalStatus) {
     setPendingDecision(true);

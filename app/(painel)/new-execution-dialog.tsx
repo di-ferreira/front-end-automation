@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -19,6 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ErrorMessage } from "@/components/error-message";
 import { FilterTabs } from "@/components/filter-tabs";
 import { PROMPT_TYPE_LABELS, type PromptType } from "@/lib/validation";
+import { useDialogForm } from "@/hooks/use-dialog-form";
 
 interface PromptOption {
   id: number;
@@ -30,20 +30,16 @@ interface PromptOption {
 type SourceMode = "biblioteca" | "texto";
 
 export function NewExecutionDialog() {
-  const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const { open, pending, error, handleOpenChange, handleSubmit } = useDialogForm();
   const [mode, setMode] = useState<SourceMode>("biblioteca");
   const [promptOptions, setPromptOptions] = useState<PromptOption[]>([]);
   const [loadingPrompts, setLoadingPrompts] = useState(true);
   const [promptId, setPromptId] = useState("");
-  const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open || promptOptions.length > 0) return;
     let cancelled = false;
 
-    // setState apenas em continuações assíncronas (regra react-hooks)
     (async () => {
       try {
         const response = await fetch("/api/prompts");
@@ -63,63 +59,47 @@ export function NewExecutionDialog() {
     };
   }, [open, promptOptions.length]);
 
-  function handleOpenChange(nextOpen: boolean) {
-    setOpen(nextOpen);
-    if (!nextOpen) setError(null);
-  }
-
-  async function handleSubmit(formData: FormData) {
-    setPending(true);
-    setError(null);
-    try {
-      const body =
-        mode === "biblioteca"
-          ? {
-              title: formData.get("title") || undefined,
-              promptId: Number(promptId),
-            }
-          : {
-              title: formData.get("title") || undefined,
-              promptText: formData.get("promptText"),
-            };
-
-      if (mode === "biblioteca" && !promptId) {
-        setError("Escolha um prompt da biblioteca.");
-        return;
-      }
-
-      const response = await fetch("/api/executions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-
-      router.refresh();
-
-      if (response.ok) {
-        setOpen(false);
-        return;
-      }
-
-      const data = (await response.json().catch(() => ({}))) as {
-        error?: string;
-      };
-      setError(data.error ?? "Não foi possível iniciar a geração.");
-    } catch {
-      setError("Falha de conexão. Tente novamente.");
-    } finally {
-      setPending(false);
+  function onSubmit(formData: FormData) {
+    if (mode === "biblioteca" && !promptId) {
+      return handleSubmit(
+        formData,
+        () => Promise.resolve(new Response(null, { status: 400 })),
+        "Escolha um prompt da biblioteca.",
+      );
     }
+
+    return handleSubmit(
+      formData,
+      (fd) => {
+        const body =
+          mode === "biblioteca"
+            ? {
+                title: fd.get("title") || undefined,
+                promptId: Number(promptId),
+              }
+            : {
+                title: fd.get("title") || undefined,
+                promptText: fd.get("promptText"),
+              };
+
+        return fetch("/api/executions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+      },
+      "Nao foi possivel iniciar a geracao.",
+    );
   }
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger render={<Button>Nova geração</Button>} />
+      <DialogTrigger render={<Button>Nova geracao</Button>} />
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Nova geração</DialogTitle>
+          <DialogTitle>Nova geracao</DialogTitle>
           <DialogDescription>
-            Dispara a automação no N8N para gerar os assets do vídeo.
+            Dispara a automacao no N8N para gerar os assets do video.
           </DialogDescription>
         </DialogHeader>
 
@@ -132,15 +112,15 @@ export function NewExecutionDialog() {
           onChange={setMode}
         />
 
-        <form action={handleSubmit} className="space-y-4">
+        <form action={onSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="exec-title">
-              Título <span className="text-muted-foreground font-normal">(opcional)</span>
+              Titulo <span className="text-muted-foreground font-normal">(opcional)</span>
             </Label>
             <Input
               id="exec-title"
               name="title"
-              placeholder='Ex.: Vídeo "Top 10 jogadas"'
+              placeholder='Ex.: Video "Top 10 jogadas"'
               maxLength={500}
             />
           </div>
@@ -191,11 +171,16 @@ export function NewExecutionDialog() {
           <ErrorMessage message={error} />
 
           <DialogFooter>
-            <Button type="button" variant="ghost" onClick={() => setOpen(false)} disabled={pending}>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => handleOpenChange(false)}
+              disabled={pending}
+            >
               Cancelar
             </Button>
             <Button type="submit" disabled={pending}>
-              {pending ? "Disparando..." : "Disparar automação"}
+              {pending ? "Disparando..." : "Disparar automacao"}
             </Button>
           </DialogFooter>
         </form>

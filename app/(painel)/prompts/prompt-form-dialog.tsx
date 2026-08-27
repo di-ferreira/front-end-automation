@@ -1,8 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -18,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ErrorMessage } from "@/components/error-message";
 import { PROMPT_TYPES, PROMPT_TYPE_LABELS } from "@/lib/validation";
+import { useDialogForm } from "@/hooks/use-dialog-form";
 
 export interface PromptFormData {
   id: number;
@@ -33,46 +31,24 @@ interface PromptFormDialogProps {
 }
 
 export function PromptFormDialog({ prompt, label }: PromptFormDialogProps) {
-  const router = useRouter();
-  const [open, setOpen] = useState(false);
-  const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { open, pending, error, handleOpenChange, handleSubmit } = useDialogForm();
 
-  function handleOpenChange(nextOpen: boolean) {
-    setOpen(nextOpen);
-    if (!nextOpen) setError(null);
-  }
-
-  async function handleSubmit(formData: FormData) {
-    setPending(true);
-    setError(null);
-    try {
-      const response = await fetch(prompt ? `/api/prompts/${prompt.id}` : "/api/prompts", {
-        method: prompt ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: formData.get("name"),
-          type: formData.get("type"),
-          content: formData.get("content"),
-          tags: formData.get("tags"),
+  function onSubmit(formData: FormData) {
+    return handleSubmit(
+      formData,
+      (fd) =>
+        fetch(prompt ? `/api/prompts/${prompt.id}` : "/api/prompts", {
+          method: prompt ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: fd.get("name"),
+            type: fd.get("type"),
+            content: fd.get("content"),
+            tags: fd.get("tags"),
+          }),
         }),
-      });
-
-      if (response.ok) {
-        setOpen(false);
-        router.refresh();
-        return;
-      }
-
-      const data = (await response.json().catch(() => ({}))) as {
-        error?: string;
-      };
-      setError(data.error ?? "Não foi possível salvar o prompt.");
-    } catch {
-      setError("Falha de conexão. Tente novamente.");
-    } finally {
-      setPending(false);
-    }
+      "Nao foi possivel salvar o prompt.",
+    );
   }
 
   return (
@@ -89,18 +65,18 @@ export function PromptFormDialog({ prompt, label }: PromptFormDialogProps) {
           <DialogTitle>{prompt ? "Editar prompt" : "Novo prompt"}</DialogTitle>
           <DialogDescription>
             {prompt
-              ? "Atualize as informações do prompt."
-              : "Cadastre um prompt reutilizável para a automação."}
+              ? "Atualize as informacoes do prompt."
+              : "Cadastre um prompt reutilizavel para a automacao."}
           </DialogDescription>
         </DialogHeader>
 
-        <form action={handleSubmit} className="space-y-4">
+        <form action={onSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor={`name-${prompt?.id ?? "novo"}`}>Nome</Label>
             <Input
               id={`name-${prompt?.id ?? "novo"}`}
               name="name"
-              placeholder="Ex.: Descrição épica de gameplay"
+              placeholder="Ex.: Descricao epica de gameplay"
               defaultValue={prompt?.name}
               required
               maxLength={255}
@@ -125,7 +101,7 @@ export function PromptFormDialog({ prompt, label }: PromptFormDialogProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor={`content-${prompt?.id ?? "novo"}`}>Conteúdo do prompt</Label>
+            <Label htmlFor={`content-${prompt?.id ?? "novo"}`}>Conteudo do prompt</Label>
             <Textarea
               id={`content-${prompt?.id ?? "novo"}`}
               name="content"
@@ -140,12 +116,12 @@ export function PromptFormDialog({ prompt, label }: PromptFormDialogProps) {
           <div className="space-y-2">
             <Label htmlFor={`tags-${prompt?.id ?? "novo"}`}>
               Tags{" "}
-              <span className="text-muted-foreground font-normal">(separadas por vírgula)</span>
+              <span className="text-muted-foreground font-normal">(separadas por virgula)</span>
             </Label>
             <Input
               id={`tags-${prompt?.id ?? "novo"}`}
               name="tags"
-              placeholder="youtube, gameplay, épico"
+              placeholder="youtube, gameplay, epico"
               defaultValue={prompt?.tags ?? ""}
               maxLength={500}
             />
@@ -154,7 +130,12 @@ export function PromptFormDialog({ prompt, label }: PromptFormDialogProps) {
           <ErrorMessage message={error} />
 
           <DialogFooter>
-            <Button type="button" variant="ghost" onClick={() => setOpen(false)} disabled={pending}>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => handleOpenChange(false)}
+              disabled={pending}
+            >
               Cancelar
             </Button>
             <Button type="submit" disabled={pending}>
