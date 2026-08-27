@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { ThemeToggle } from "@/components/theme-toggle";
 import { LoginForm } from "./login-form";
 
 export const metadata: Metadata = {
@@ -9,7 +10,10 @@ export const metadata: Metadata = {
 export default function LoginPage() {
   return (
     <div className="bg-background flex flex-1 items-center justify-center p-6">
-      <main className="border-border bg-card w-full max-w-sm rounded-xl border p-8 shadow-sm">
+      <main className="border-border bg-card relative w-full max-w-sm rounded-xl border p-8 shadow-sm">
+        <div className="absolute right-4 top-4">
+          <ThemeToggle />
+        </div>
         <h1 className="text-foreground text-2xl font-semibold tracking-tight">
           Painel de Automação de Vídeos
         </h1>

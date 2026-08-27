@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { signOutAction } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
 import { NavLinks } from "@/components/nav-links";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default async function PainelLayout({
   children,
@@ -30,6 +31,7 @@ export default async function PainelLayout({
             <NavLinks />
           </div>
           <div className="flex items-center gap-3">
+            <ThemeToggle />
             <span className="text-muted-foreground hidden text-sm sm:inline">
               {session.user.name ?? session.user.email}
             </span>
