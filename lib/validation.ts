@@ -36,6 +36,8 @@ export const EXECUTION_STATUS_LABELS: Record<ExecutionStatus, string> = {
   failed: "Falhou",
 };
 
+export type FilterValue = "all" | ExecutionStatus;
+
 export const ASSET_TYPES = [
   "video",
   "thumb",

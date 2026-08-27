@@ -6,12 +6,37 @@ import { StatusBadge } from "./status-badge";
 
 import { NewExecutionDialog } from "./new-execution-dialog";
 import { AutoRefresh } from "./auto-refresh";
+import { ExecutionsFilter } from "./executions-filter";
 import { listExecutions } from "@/db/queries/executions";
+import { executionStatusFilterSchema } from "@/lib/validation";
+import type { ExecutionStatus, FilterValue } from "@/lib/validation";
 
-export default async function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string }>;
+}) {
+  const { status } = await searchParams;
   const session = await auth();
-  const rows = await listExecutions();
-  const hasActive = rows.some(
+
+  const allRows = await listExecutions({ limit: 200 });
+
+  const counts: Record<FilterValue, number> = {
+    all: allRows.length,
+    queued: 0,
+    running: 0,
+    completed: 0,
+    failed: 0,
+  };
+  for (const row of allRows) {
+    counts[row.status as ExecutionStatus]++;
+  }
+
+  const parsed = executionStatusFilterSchema.safeParse(status);
+  const activeFilter: FilterValue = parsed.success && parsed.data ? parsed.data : "all";
+  const rows = activeFilter === "all" ? allRows : allRows.filter((r) => r.status === activeFilter);
+
+  const hasActive = allRows.some(
     (row) => row.status === "queued" || row.status === "running",
   );
 
@@ -29,16 +54,26 @@ export default async function Home() {
         <NewExecutionDialog />
       </div>
 
+      <ExecutionsFilter active={activeFilter} counts={counts} />
+
       <AutoRefresh active={hasActive} />
 
       {rows.length === 0 ? (
         <div className="border-border bg-card text-muted-foreground flex flex-col items-center justify-center gap-2 rounded-xl border px-6 py-16 text-center text-sm shadow-sm">
           <span className="text-foreground font-medium">
-            Nenhuma execução ainda
+            {activeFilter !== "all"
+              ? "Nenhuma execução neste filtro"
+              : "Nenhuma execução ainda"}
           </span>
           <span>
-            Dispare sua primeira geração com o botão{" "}
-            <span className="text-foreground font-medium">Nova geração</span>.
+            {activeFilter !== "all"
+              ? "Tente trocar o filtro ou crie uma nova geração."
+              : (
+                <>
+                  Dispare sua primeira geração com o botão{" "}
+                  <span className="text-foreground font-medium">Nova geração</span>.
+                </>
+              )}
           </span>
         </div>
       ) : (
@@ -95,8 +130,11 @@ export default async function Home() {
 
       <p className="text-muted-foreground text-xs">
         Bem-vindo{session?.user?.name ? `, ${session.user.name}` : ""} —{" "}
-        {rows.length} execuç{rows.length === 1 ? "ão" : "ões"} registrada
-        {rows.length === 1 ? "" : "s"}.
+        {activeFilter !== "all"
+          ? `${rows.length} de ${allRows.length}`
+          : allRows.length}{" "}
+        execuç{allRows.length === 1 ? "ão" : "ões"} registrada
+        {allRows.length === 1 ? "" : "s"}.
       </p>
     </section>
   );
