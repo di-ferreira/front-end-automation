@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 
-import { cn } from "@/lib/utils";
+import { FilterTabs } from "@/components/filter-tabs";
 import type { ExecutionStatus } from "@/lib/validation";
 
 type FilterValue = "all" | ExecutionStatus;
@@ -35,25 +35,13 @@ export function ExecutionsFilter({ active, counts }: ExecutionsFilterProps) {
   }
 
   return (
-    <div className="bg-muted flex flex-wrap gap-1 rounded-lg p-1">
-      {FILTERS.map((option) => (
-        <button
-          key={option.value}
-          type="button"
-          onClick={() => setFilter(option.value)}
-          className={cn(
-            "rounded-md px-3 py-1.5 text-sm font-medium transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
-            active === option.value
-              ? "bg-card text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground",
-          )}
-        >
-          {option.label}
-          <span className="text-muted-foreground ml-1 text-xs tabular-nums">
-            {counts[option.value]}
-          </span>
-        </button>
-      ))}
-    </div>
+    <FilterTabs
+      options={FILTERS.map((option) => ({
+        ...option,
+        count: counts[option.value],
+      }))}
+      active={active}
+      onChange={setFilter}
+    />
   );
 }

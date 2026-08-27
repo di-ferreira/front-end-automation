@@ -4,6 +4,7 @@ import { useActionState } from "react";
 
 import { loginAction, type LoginState } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
+import { ErrorMessage } from "@/components/error-message";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -40,14 +41,7 @@ export function LoginForm() {
         />
       </div>
 
-      {state.error ? (
-        <p
-          role="alert"
-          className="text-destructive bg-destructive/10 rounded-lg px-3 py-2 text-sm font-medium"
-        >
-          {state.error}
-        </p>
-      ) : null}
+      <ErrorMessage message={state.error} />
 
       <Button type="submit" size="lg" className="w-full" disabled={pending}>
         {pending ? "Entrando..." : "Entrar"}

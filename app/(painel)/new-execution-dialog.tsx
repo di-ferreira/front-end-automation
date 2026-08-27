@@ -16,11 +16,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  PROMPT_TYPE_LABELS,
-  type PromptType,
-} from "@/lib/validation";
-import { cn } from "@/lib/utils";
+import { ErrorMessage } from "@/components/error-message";
+import { FilterTabs } from "@/components/filter-tabs";
+import { PROMPT_TYPE_LABELS, type PromptType } from "@/lib/validation";
 
 interface PromptOption {
   id: number;
@@ -116,9 +114,7 @@ export function NewExecutionDialog() {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger
-        render={<Button>Nova geração</Button>}
-      />
+      <DialogTrigger render={<Button>Nova geração</Button>} />
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Nova geração</DialogTitle>
@@ -127,37 +123,19 @@ export function NewExecutionDialog() {
           </DialogDescription>
         </DialogHeader>
 
-        {/* Alternância de origem do prompt */}
-        <div className="bg-muted grid grid-cols-2 gap-1 rounded-lg p-1">
-          {(
-            [
-              ["biblioteca", "Da biblioteca"],
-              ["texto", "Digitar prompt"],
-            ] as const
-          ).map(([value, labelText]) => (
-            <button
-              key={value}
-              type="button"
-              onClick={() => setMode(value)}
-              className={cn(
-                "rounded-md px-3 py-1.5 text-sm font-medium transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
-                mode === value
-                  ? "bg-card text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {labelText}
-            </button>
-          ))}
-        </div>
+        <FilterTabs
+          options={[
+            { value: "biblioteca", label: "Da biblioteca" },
+            { value: "texto", label: "Digitar prompt" },
+          ]}
+          active={mode}
+          onChange={setMode}
+        />
 
         <form action={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="exec-title">
-              Título{" "}
-              <span className="text-muted-foreground font-normal">
-                (opcional)
-              </span>
+              Título <span className="text-muted-foreground font-normal">(opcional)</span>
             </Label>
             <Input
               id="exec-title"
@@ -192,7 +170,7 @@ export function NewExecutionDialog() {
                 ))}
               </select>
               {selectedPreview(promptOptions, promptId) ? (
-                <p className="text-muted-foreground line-clamp-3 rounded-lg bg-muted/50 px-3 py-2 text-xs leading-5">
+                <p className="text-muted-foreground bg-muted/50 line-clamp-3 rounded-lg px-3 py-2 text-xs leading-5">
                   {selectedPreview(promptOptions, promptId)}
                 </p>
               ) : null}
@@ -210,22 +188,10 @@ export function NewExecutionDialog() {
             </div>
           )}
 
-          {error ? (
-            <p
-              role="alert"
-              className="text-destructive bg-destructive/10 rounded-lg px-3 py-2 text-sm font-medium"
-            >
-              {error}
-            </p>
-          ) : null}
+          <ErrorMessage message={error} />
 
           <DialogFooter>
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setOpen(false)}
-              disabled={pending}
-            >
+            <Button type="button" variant="ghost" onClick={() => setOpen(false)} disabled={pending}>
               Cancelar
             </Button>
             <Button type="submit" disabled={pending}>

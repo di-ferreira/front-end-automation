@@ -14,6 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { ErrorMessage } from "@/components/error-message";
 
 interface DeletePromptButtonProps {
   id: number;
@@ -61,19 +62,12 @@ export function DeletePromptButton({ id, name }: DeletePromptButtonProps) {
           <DialogTitle>Excluir prompt</DialogTitle>
           <DialogDescription>
             Tem certeza que deseja excluir{" "}
-            <span className="text-foreground font-medium">{name}</span>? Esta
-            ação não pode ser desfeita.
+            <span className="text-foreground font-medium">{name}</span>? Esta ação não pode ser
+            desfeita.
           </DialogDescription>
         </DialogHeader>
 
-        {error ? (
-          <p
-            role="alert"
-            className="text-destructive bg-destructive/10 rounded-lg px-3 py-2 text-sm font-medium"
-          >
-            {error}
-          </p>
-        ) : null}
+        <ErrorMessage message={error} />
 
         <DialogFooter>
           <DialogClose
@@ -83,11 +77,7 @@ export function DeletePromptButton({ id, name }: DeletePromptButtonProps) {
               </Button>
             }
           />
-          <Button
-            variant="destructive"
-            onClick={handleDelete}
-            disabled={pending}
-          >
+          <Button variant="destructive" onClick={handleDelete} disabled={pending}>
             {pending ? "Excluindo..." : "Excluir"}
           </Button>
         </DialogFooter>

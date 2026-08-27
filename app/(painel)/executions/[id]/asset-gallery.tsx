@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { FilterTabs } from "@/components/filter-tabs";
 import {
   APPROVAL_STATUS_LABELS,
   ASSET_TYPE_LABELS,
@@ -34,13 +35,7 @@ export interface GalleryAsset {
   approvedAt?: string | null;
 }
 
-const SECTION_ORDER: AssetType[] = [
-  "video",
-  "thumb",
-  "image",
-  "music",
-  "description",
-];
+const SECTION_ORDER: AssetType[] = ["video", "thumb", "image", "music", "description"];
 
 type ApprovalFilter = "all" | ApprovalStatus;
 
@@ -96,12 +91,9 @@ export function AssetGallery({
     rejected: assets.filter((asset) => asset.approvalStatus === "rejected").length,
   };
 
-  const visible =
-    filter === "all" ? assets : assets.filter((a) => a.approvalStatus === filter);
+  const visible = filter === "all" ? assets : assets.filter((a) => a.approvalStatus === filter);
 
-  const images = visible.filter(
-    (asset) => asset.type === "image" || asset.type === "thumb",
-  );
+  const images = visible.filter((asset) => asset.type === "image" || asset.type === "thumb");
 
   async function decide(assetId: number, approvalStatus: ApprovalStatus) {
     await fetch(`/api/executions/${executionId}/assets/${assetId}`, {
@@ -126,32 +118,18 @@ export function AssetGallery({
     <div className="space-y-6">
       {/* Barra de filtros + aprovação global */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="bg-muted flex flex-wrap gap-1 rounded-lg p-1">
-          {FILTERS.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              onClick={() => setFilter(option.value)}
-              className={cn(
-                "rounded-md px-3 py-1.5 text-sm font-medium transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
-                filter === option.value
-                  ? "bg-card text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {option.label}
-              <span className="text-muted-foreground ml-1 text-xs tabular-nums">
-                {counts[option.value]}
-              </span>
-            </button>
-          ))}
-        </div>
+        <FilterTabs
+          options={FILTERS.map((option) => ({
+            ...option,
+            count: counts[option.value],
+          }))}
+          active={filter}
+          onChange={setFilter}
+        />
 
         {counts.pending > 0 ? (
           <Button variant="secondary" size="sm" onClick={approveAll} disabled={approvingAll}>
-            {approvingAll
-              ? "Aprovando..."
-              : `Aprovar todos (${counts.pending})`}
+            {approvingAll ? "Aprovando..." : `Aprovar todos (${counts.pending})`}
           </Button>
         ) : null}
       </div>
@@ -170,9 +148,7 @@ export function AssetGallery({
               <section key={type} className="space-y-3">
                 <h2 className="text-foreground flex items-center gap-2 text-sm font-semibold">
                   {ASSET_TYPE_LABELS[type]}
-                  <span className="text-muted-foreground font-normal">
-                    ({group.length})
-                  </span>
+                  <span className="text-muted-foreground font-normal">({group.length})</span>
                 </h2>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {group.map((asset) => (
@@ -183,11 +159,7 @@ export function AssetGallery({
                       onOpenImage={
                         images.some((image) => image.id === asset.id)
                           ? () =>
-                              setLightboxIndex(
-                                images.findIndex(
-                                  (image) => image.id === asset.id,
-                                ),
-                              )
+                              setLightboxIndex(images.findIndex((image) => image.id === asset.id))
                           : undefined
                       }
                     />
@@ -232,12 +204,7 @@ export function AssetGallery({
                 <Button
                   variant="outline"
                   size="sm"
-                  render={
-                    <a
-                      href={fileUrl(images[lightboxIndex].filePath, true)}
-                      download
-                    />
-                  }
+                  render={<a href={fileUrl(images[lightboxIndex].filePath, true)} download />}
                 >
                   Baixar
                 </Button>
@@ -308,8 +275,7 @@ function AssetCard({
       className={cn(
         "border-border bg-card flex flex-col overflow-hidden rounded-xl border shadow-sm transition-colors",
         asset.approvalStatus === "approved" && "border-emerald-300",
-        asset.approvalStatus === "rejected" &&
-          "border-red-200 opacity-90 hover:opacity-100",
+        asset.approvalStatus === "rejected" && "border-red-200 opacity-90 hover:opacity-100",
       )}
     >
       <div className="bg-muted/30 relative flex min-h-40 flex-1 items-center justify-center">
@@ -363,20 +329,14 @@ function AssetCard({
 
         {asset.approvedByName && asset.approvedAt ? (
           <p className="text-muted-foreground text-[11px] italic">
-            {DECISION_VERB[
-              asset.approvalStatus as Exclude<ApprovalStatus, "pending">
-            ] ?? ""}{" "}
-            por {asset.approvedByName} em {formatDecision(asset.approvedAt)}
+            {DECISION_VERB[asset.approvalStatus as Exclude<ApprovalStatus, "pending">] ?? ""} por{" "}
+            {asset.approvedByName} em {formatDecision(asset.approvedAt)}
           </p>
         ) : null}
 
         <div className="flex flex-wrap gap-1">
           {asset.approvalStatus !== "approved" ? (
-            <Button
-              size="xs"
-              onClick={() => runDecision("approved")}
-              disabled={pendingDecision}
-            >
+            <Button size="xs" onClick={() => runDecision("approved")} disabled={pendingDecision}>
               Aprovar
             </Button>
           ) : null}
@@ -400,19 +360,11 @@ function AssetCard({
               Desfazer
             </Button>
           ) : null}
-          <Button
-            variant="ghost"
-            size="xs"
-            onClick={() => copy(asset.filePath, "path")}
-          >
+          <Button variant="ghost" size="xs" onClick={() => copy(asset.filePath, "path")}>
             {copied === "path" ? "Copiado!" : "Copiar caminho"}
           </Button>
           {asset.type === "description" && asset.textContent ? (
-            <Button
-              variant="ghost"
-              size="xs"
-              onClick={() => copy(asset.textContent!, "text")}
-            >
+            <Button variant="ghost" size="xs" onClick={() => copy(asset.textContent!, "text")}>
               {copied === "text" ? "Copiado!" : "Copiar texto"}
             </Button>
           ) : null}

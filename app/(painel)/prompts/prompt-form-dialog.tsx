@@ -16,10 +16,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  PROMPT_TYPES,
-  PROMPT_TYPE_LABELS,
-} from "@/lib/validation";
+import { ErrorMessage } from "@/components/error-message";
+import { PROMPT_TYPES, PROMPT_TYPE_LABELS } from "@/lib/validation";
 
 export interface PromptFormData {
   id: number;
@@ -49,19 +47,16 @@ export function PromptFormDialog({ prompt, label }: PromptFormDialogProps) {
     setPending(true);
     setError(null);
     try {
-      const response = await fetch(
-        prompt ? `/api/prompts/${prompt.id}` : "/api/prompts",
-        {
-          method: prompt ? "PUT" : "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name: formData.get("name"),
-            type: formData.get("type"),
-            content: formData.get("content"),
-            tags: formData.get("tags"),
-          }),
-        },
-      );
+      const response = await fetch(prompt ? `/api/prompts/${prompt.id}` : "/api/prompts", {
+        method: prompt ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: formData.get("name"),
+          type: formData.get("type"),
+          content: formData.get("content"),
+          tags: formData.get("tags"),
+        }),
+      });
 
       if (response.ok) {
         setOpen(false);
@@ -91,9 +86,7 @@ export function PromptFormDialog({ prompt, label }: PromptFormDialogProps) {
       />
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>
-            {prompt ? "Editar prompt" : "Novo prompt"}
-          </DialogTitle>
+          <DialogTitle>{prompt ? "Editar prompt" : "Novo prompt"}</DialogTitle>
           <DialogDescription>
             {prompt
               ? "Atualize as informações do prompt."
@@ -132,9 +125,7 @@ export function PromptFormDialog({ prompt, label }: PromptFormDialogProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor={`content-${prompt?.id ?? "novo"}`}>
-              Conteúdo do prompt
-            </Label>
+            <Label htmlFor={`content-${prompt?.id ?? "novo"}`}>Conteúdo do prompt</Label>
             <Textarea
               id={`content-${prompt?.id ?? "novo"}`}
               name="content"
@@ -149,9 +140,7 @@ export function PromptFormDialog({ prompt, label }: PromptFormDialogProps) {
           <div className="space-y-2">
             <Label htmlFor={`tags-${prompt?.id ?? "novo"}`}>
               Tags{" "}
-              <span className="text-muted-foreground font-normal">
-                (separadas por vírgula)
-              </span>
+              <span className="text-muted-foreground font-normal">(separadas por vírgula)</span>
             </Label>
             <Input
               id={`tags-${prompt?.id ?? "novo"}`}
@@ -162,22 +151,10 @@ export function PromptFormDialog({ prompt, label }: PromptFormDialogProps) {
             />
           </div>
 
-          {error ? (
-            <p
-              role="alert"
-              className="text-destructive bg-destructive/10 rounded-lg px-3 py-2 text-sm font-medium"
-            >
-              {error}
-            </p>
-          ) : null}
+          <ErrorMessage message={error} />
 
           <DialogFooter>
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setOpen(false)}
-              disabled={pending}
-            >
+            <Button type="button" variant="ghost" onClick={() => setOpen(false)} disabled={pending}>
               Cancelar
             </Button>
             <Button type="submit" disabled={pending}>

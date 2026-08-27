@@ -13,6 +13,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { ErrorMessage } from "@/components/error-message";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -69,13 +70,17 @@ export function EditExecutionDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger render={<Button variant="outline" size="sm">Editar</Button>} />
+      <DialogTrigger
+        render={
+          <Button variant="outline" size="sm">
+            Editar
+          </Button>
+        }
+      />
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Editar título e descrição</DialogTitle>
-          <DialogDescription>
-            Texto final que será usado na publicação do vídeo.
-          </DialogDescription>
+          <DialogDescription>Texto final que será usado na publicação do vídeo.</DialogDescription>
         </DialogHeader>
 
         <form action={handleSubmit} className="space-y-4">
@@ -103,22 +108,10 @@ export function EditExecutionDialog({
             />
           </div>
 
-          {error ? (
-            <p
-              role="alert"
-              className="text-destructive bg-destructive/10 rounded-lg px-3 py-2 text-sm font-medium"
-            >
-              {error}
-            </p>
-          ) : null}
+          <ErrorMessage message={error} />
 
           <DialogFooter>
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setOpen(false)}
-              disabled={pending}
-            >
+            <Button type="button" variant="ghost" onClick={() => setOpen(false)} disabled={pending}>
               Cancelar
             </Button>
             <Button type="submit" disabled={pending}>
