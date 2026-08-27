@@ -25,7 +25,7 @@ export function ExecutionHistory({ entries }: ExecutionHistoryProps) {
         {entries.map((entry) => (
           <li
             key={entry.assetId}
-            className="flex flex-wrap items-center gap-x-2 gap-y-1 px-4 py-2.5 text-xs"
+            className="hover:bg-muted/20 flex flex-wrap items-center gap-x-2 gap-y-1 px-4 py-2.5 text-xs transition-colors"
           >
             <span
               className={`inline-flex items-center rounded-full border px-2 py-0.5 font-medium ${APPROVAL_STATUS_BADGE_CLASSES[entry.status]}`}

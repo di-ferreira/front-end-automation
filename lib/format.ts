@@ -1,23 +1,34 @@
 import type { ApprovalStatus, ExecutionStatus, PromptType } from "@/lib/validation";
 
 export const PROMPT_TYPE_BADGE_CLASSES: Record<PromptType, string> = {
-  musica: "border-purple-200 bg-purple-50 text-purple-700",
-  imagem: "border-sky-200 bg-sky-50 text-sky-700",
-  descricao: "border-amber-200 bg-amber-50 text-amber-700",
-  video: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  musica:
+    "border-purple-200 bg-purple-50 text-purple-700 dark:border-purple-800 dark:bg-purple-950 dark:text-purple-300",
+  imagem:
+    "border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-800 dark:bg-sky-950 dark:text-sky-300",
+  descricao:
+    "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300",
+  video:
+    "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300",
 };
 
 export const EXECUTION_STATUS_BADGE_CLASSES: Record<ExecutionStatus, string> = {
-  queued: "border-amber-200 bg-amber-50 text-amber-700",
-  running: "border-sky-200 bg-sky-50 text-sky-700",
-  completed: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  failed: "border-red-200 bg-red-50 text-red-700",
+  queued:
+    "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300",
+  running:
+    "border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-800 dark:bg-sky-950 dark:text-sky-300",
+  completed:
+    "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300",
+  failed:
+    "border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300",
 };
 
 export const APPROVAL_STATUS_BADGE_CLASSES: Record<ApprovalStatus, string> = {
-  pending: "border-amber-200 bg-amber-50 text-amber-700",
-  approved: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  rejected: "border-red-200 bg-red-50 text-red-700",
+  pending:
+    "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300",
+  approved:
+    "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300",
+  rejected:
+    "border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300",
 };
 
 /** Formata datas como "12 ago 2026, 14:30" no fuso local. */

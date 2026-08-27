@@ -88,11 +88,9 @@ export default async function ExecutionPage({ params }: { params: Promise<{ id: 
       />
 
       {assets.length === 0 ? (
-        <div className="border-border bg-card text-muted-foreground flex flex-col items-center justify-center gap-1 rounded-xl border px-6 py-16 text-center text-sm shadow-sm">
-          <span className="text-foreground font-medium">Nenhum asset registrado</span>
-          <span>
-            Os arquivos aparecem aqui apos o callback do N8N com status &quot;completed&quot;.
-          </span>
+        <div className="border-border bg-card text-muted-foreground flex flex-col items-center justify-center gap-2 rounded-xl border px-6 py-16 text-center text-sm shadow-sm">
+          <p className="text-foreground font-medium">Nenhum asset registrado</p>
+          <p>Os arquivos aparecem aqui apos o callback do N8N com status &quot;completed&quot;.</p>
         </div>
       ) : (
         <AssetGallery executionId={execution.id} assets={assets} />

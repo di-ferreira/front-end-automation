@@ -50,7 +50,10 @@ export function ExecutionListItem({
           {startedAt ? <p>Inicio: {formatDateTime(startedAt)}</p> : null}
           {finishedAt ? <p>Fim: {formatDateTime(finishedAt)}</p> : null}
           {promptName ? <p>Prompt: {promptName}</p> : null}
-          <Link href={`/executions/${id}`} className="text-primary hover:underline">
+          <Link
+            href={`/executions/${id}`}
+            className="text-primary hover:text-primary/80 focus-visible:ring-ring/50 rounded-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
+          >
             Ver detalhes &rarr;
           </Link>
         </div>

@@ -52,14 +52,14 @@ export default async function Home({
 
       {rows.length === 0 ? (
         <div className="border-border bg-card text-muted-foreground flex flex-col items-center justify-center gap-2 rounded-xl border px-6 py-16 text-center text-sm shadow-sm">
-          <span className="text-foreground font-medium">
+          <p className="text-foreground font-medium">
             {activeFilter !== "all" ? "Nenhuma execucao neste filtro" : "Nenhuma execucao ainda"}
-          </span>
-          <span>
+          </p>
+          <p>
             {activeFilter !== "all"
               ? "Tente trocar o filtro ou crie uma nova geracao."
               : "Dispare sua primeira geracao com o botao Nova geracao."}
-          </span>
+          </p>
         </div>
       ) : (
         <ul className="space-y-3">

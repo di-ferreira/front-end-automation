@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -101,7 +102,13 @@ export function NewExecutionDialog() {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger render={<Button>Nova geracao</Button>} />
+      <DialogTrigger
+        render={
+          <Button>
+            <Plus className="size-4" /> Nova geracao
+          </Button>
+        }
+      />
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Nova geracao</DialogTitle>

@@ -25,11 +25,8 @@ export function AutoRefresh({ active, intervalMs = 5000 }: AutoRefreshProps) {
   if (!active) return null;
 
   return (
-    <p
-      className="text-muted-foreground flex items-center gap-2 text-xs"
-      role="status"
-    >
-      <span className="border-sky-200 bg-sky-50 inline-block size-2 animate-pulse rounded-full border" />
+    <p className="text-muted-foreground flex items-center gap-2 text-xs" role="status">
+      <span className="inline-block size-2 animate-pulse rounded-full border border-sky-200 bg-sky-50 dark:border-sky-800 dark:bg-sky-500" />
       Atualizando automaticamente enquanto houver execuções ativas...
     </p>
   );

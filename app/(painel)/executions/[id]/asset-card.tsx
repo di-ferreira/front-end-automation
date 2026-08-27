@@ -55,7 +55,7 @@ export function AssetCard({ asset, onOpenImage, onDecide }: AssetCardProps) {
   return (
     <article
       className={cn(
-        "border-border bg-card flex flex-col overflow-hidden rounded-xl border shadow-sm transition-colors",
+        "border-border bg-card flex flex-col overflow-hidden rounded-xl border shadow-sm transition-[border-color,opacity]",
         asset.approvalStatus === "approved" && "border-emerald-300",
         asset.approvalStatus === "rejected" && "border-red-200 opacity-90 hover:opacity-100",
       )}
@@ -121,7 +121,7 @@ export function AssetCard({ asset, onOpenImage, onDecide }: AssetCardProps) {
         <div className="flex flex-wrap gap-1">
           {asset.approvalStatus !== "approved" ? (
             <Button size="xs" onClick={() => runDecision("approved")} disabled={pendingDecision}>
-              Aprovar
+              {pendingDecision ? "Aprovando..." : "Aprovar"}
             </Button>
           ) : null}
           {asset.approvalStatus !== "rejected" ? (
@@ -131,7 +131,7 @@ export function AssetCard({ asset, onOpenImage, onDecide }: AssetCardProps) {
               onClick={() => runDecision("rejected")}
               disabled={pendingDecision}
             >
-              Rejeitar
+              {pendingDecision ? "Rejeitando..." : "Rejeitar"}
             </Button>
           ) : null}
           {asset.approvalStatus !== "pending" ? (
@@ -141,7 +141,7 @@ export function AssetCard({ asset, onOpenImage, onDecide }: AssetCardProps) {
               onClick={() => runDecision("pending")}
               disabled={pendingDecision}
             >
-              Desfazer
+              {pendingDecision ? "Desfazendo..." : "Desfazer"}
             </Button>
           ) : null}
           <Button variant="ghost" size="xs" onClick={() => copy(asset.filePath, "path")}>
