@@ -1,0 +1,15 @@
+# <type>(<scope>): <subject>
+#
+# Types: feat, fix, docs, style, refactor, test, chore, perf, ci, build, revert
+# Scope: auth, api, db, ui, n8n, executions, prompts, assets, docker, config
+# Subject: imperativo, sem ponto, max 72 chars
+#
+# [corpo opcional] - explicar POR QUE, nao O QUE
+# [footer opcional] - Breaking Changes, Closes #issue
+#
+# Exemplos:
+#   feat(auth): login com credenciais
+#   fix(api): retorno 500 no callback do n8n
+#   refactor(db): extrair queries para modulo separado
+#   docs(readme): instrucoes de setup local
+#   chore(deps): atualizar drizzle-orm

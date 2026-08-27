@@ -47,3 +47,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# opencode skills (gerenciado por npx skills)
+.agents/
+skills-lock.json
+
+# husky
+.husky/_/
