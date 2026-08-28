@@ -44,6 +44,10 @@ export async function resolveWorkflow(
   const fallbackUrl = process.env.N8N_WEBHOOK_URL?.trim();
   if (!fallbackUrl) return null;
 
+  console.warn(
+    `[workflow-resolver] Fallback N8N_WEBHOOK_URL para canal=${channelId} asset=${assetType}. Configure um workflow_configs no banco.`,
+  );
+
   const [channel] = await db.select().from(channels).where(eq(channels.id, channelId)).limit(1);
 
   return {
