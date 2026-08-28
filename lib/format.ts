@@ -1,4 +1,11 @@
-import type { ApprovalStatus, ExecutionStatus, PromptType } from "@/lib/validation";
+import type {
+  ApprovalStatus,
+  AssetStudioType,
+  ExecutionStatus,
+  GenerationStatus,
+  PromptType,
+  WorkflowExecutionStatus,
+} from "@/lib/validation";
 
 export const PROMPT_TYPE_BADGE_CLASSES: Record<PromptType, string> = {
   musica:
@@ -87,3 +94,42 @@ export function fileName(filePath: string): string {
 export function relativePath(filePath: string): string {
   return filePath.split("/").slice(1).join("/") || filePath;
 }
+
+// ---------------------------------------------------------------------------
+// Asset Studio
+// ---------------------------------------------------------------------------
+
+export const ASSET_STUDIO_TYPE_BADGE_CLASSES: Record<AssetStudioType, string> = {
+  music:
+    "border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-800 dark:bg-violet-950 dark:text-violet-300",
+  thumbnail:
+    "border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-800 dark:bg-sky-950 dark:text-sky-300",
+  background:
+    "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300",
+  description:
+    "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300",
+  video:
+    "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-950 dark:text-rose-300",
+};
+
+export const GENERATION_STATUS_BADGE_CLASSES: Record<GenerationStatus, string> = {
+  pending:
+    "border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300",
+  generating:
+    "border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-800 dark:bg-sky-950 dark:text-sky-300",
+  completed:
+    "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300",
+  failed:
+    "border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300",
+};
+
+export const WORKFLOW_EXECUTION_STATUS_BADGE_CLASSES: Record<WorkflowExecutionStatus, string> = {
+  pending:
+    "border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300",
+  running:
+    "border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-800 dark:bg-sky-950 dark:text-sky-300",
+  success:
+    "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300",
+  failed:
+    "border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300",
+};
