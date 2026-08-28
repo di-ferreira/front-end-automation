@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 
 const links = [
   { href: "/", label: "Painel" },
+  { href: "/channels", label: "Canais" },
   { href: "/assets/music", label: "Asset Studio" },
   { href: "/prompts", label: "Prompts" },
 ];
