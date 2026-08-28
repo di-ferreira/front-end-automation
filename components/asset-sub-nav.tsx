@@ -5,19 +5,21 @@ import { usePathname } from "next/navigation";
 
 import { cn } from "@/lib/utils";
 
-const links = [
-  { href: "/", label: "Painel" },
-  { href: "/assets/music", label: "Asset Studio" },
-  { href: "/prompts", label: "Prompts" },
+const assetLinks = [
+  { href: "/assets/music", label: "Música" },
+  { href: "/assets/thumbnail", label: "Thumbnail" },
+  { href: "/assets/background", label: "Background" },
+  { href: "/assets/description", label: "Descrição" },
+  { href: "/assets/video", label: "Vídeo" },
 ];
 
-export function NavLinks() {
+export function AssetSubNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="flex items-center gap-1">
-      {links.map((link) => {
-        const active = link.href === "/" ? pathname === "/" : pathname.startsWith(link.href);
+    <nav className="flex flex-wrap gap-1" aria-label="Asset Studio">
+      {assetLinks.map((link) => {
+        const active = pathname === link.href;
         return (
           <Link
             key={link.href}
