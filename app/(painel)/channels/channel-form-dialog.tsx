@@ -38,6 +38,7 @@ export function ChannelFormDialog({ channel }: ChannelFormDialogProps) {
   const [name, setName] = useState(channel?.name ?? "");
   const [slug, setSlug] = useState(channel?.slug ?? "");
   const [slugManual, setSlugManual] = useState(false);
+  const [enabled, setEnabled] = useState(channel?.enabled ?? 1);
 
   const handleNameChange = useCallback(
     (value: string) => {
@@ -61,6 +62,7 @@ export function ChannelFormDialog({ channel }: ChannelFormDialogProps) {
       description: (formData.get("description") as string) || undefined,
       color: (formData.get("color") as string) || undefined,
       icon: (formData.get("icon") as string) || undefined,
+      ...(isEditing ? { enabled } : {}),
     };
 
     return handleSubmit(
@@ -177,6 +179,32 @@ export function ChannelFormDialog({ channel }: ChannelFormDialogProps) {
               />
             </div>
           </div>
+
+          {isEditing && (
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div className="space-y-0.5">
+                <Label>Ativo</Label>
+                <p className="text-muted-foreground text-xs">
+                  {enabled ? "Canal ativo e visível" : "Canal inativo e oculto"}
+                </p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={enabled === 1}
+                onClick={() => setEnabled(enabled ? 0 : 1)}
+                className={`peer focus-visible:ring-ring inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
+                  enabled ? "bg-primary" : "bg-input"
+                }`}
+              >
+                <span
+                  className={`bg-background pointer-events-none block h-5 w-5 rounded-full shadow-lg ring-0 transition-transform ${
+                    enabled ? "translate-x-5" : "translate-x-0"
+                  }`}
+                />
+              </button>
+            </div>
+          )}
 
           <ErrorMessage message={error} />
 
