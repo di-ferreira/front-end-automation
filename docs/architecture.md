@@ -733,3 +733,112 @@ sem necessidade real.
 Começar simples.
 
 Adicionar complexidade somente quando houver um problema concreto para resolver.
+
+---
+
+# 28. Asset Studio
+
+O Asset Studio é um sistema de geração individual de assets para canais.
+
+## 28.1 Conceitos
+
+- **Channel**: entidade que representa um canal de conteúdo (ex.: Jazz, LoFi, Metalcore)
+- **Workflow Config**: configuração de webhook por combinação canal × asset type
+- **Asset Generation**: registro individual de uma geração de asset
+- **Workflow Execution**: log de execução HTTP de um webhook
+
+## 28.2 Fluxo
+
+```text
+User selects channel + asset type
+            ↓
+POST /api/assets/generate
+            ↓
+generateAsset() use case
+            ↓
+resolveWorkflow(channelId, assetType)
+            ↓
+workflow_configs (DB) → webhook URL + headers
+            ↓
+executeWorkflow(config, payload)
+            ↓
+External Workflow (N8N) → asset file
+            ↓
+asset_generations updated (status, filePath)
+```
+
+## 28.3 Fallback
+
+Se não existir `workflow_configs` para o canal/tipo solicitado, o sistema faz fallback para `N8N_WEBHOOK_URL` do .env (legado). Um warning é logado.
+
+## 28.4 Database
+
+Tabelas:
+
+```text
+channels
+├── id, name, slug, description, color, icon, enabled, metadata
+└── unique index on slug
+
+workflow_configs
+├── id, channel_id (FK), asset_type, name, slug, webhook_url
+├── method, headers, enabled, priority, timeout_ms, metadata
+├── unique index on slug
+└── index on channel_id
+
+asset_generations
+├── id, channel_id (FK), asset_type, prompt_text, file_path
+├── mime_type, size_bytes, status, error, workflow_config_id (FK)
+├── metadata, approved_by_id (FK), approved_at
+└── indexes on channel_id, status
+
+workflow_executions
+├── id, workflow_config_id (FK), asset_generation_id (FK)
+├── status, request_payload, response_payload, error
+├── started_at, completed_at, duration_ms
+└── index on workflow_config_id
+```
+
+## 28.5 Pages
+
+```text
+/assets/music        → Music Asset Studio
+/assets/thumbnail    → Thumbnail Asset Studio
+/assets/background   → Background Asset Studio
+/assets/description  → Description Asset Studio
+/assets/video        → Video Asset Studio
+```
+
+Cada página usa:
+
+- Server Component para buscar dados
+- Client Component para interação (form + preview)
+- Shared components: ChannelSelector, AssetGeneratorForm, AssetPreviewCard
+
+## 28.6 Channel Management
+
+```text
+/channels            → Lista de canais (tabela CRUD)
+/channels/[id]       → Detalhe do canal + workflow configs
+```
+
+API:
+
+```text
+GET/POST      /api/channels
+GET/PUT/DELETE /api/channels/[id]
+GET/POST      /api/workflow-configs
+GET/PUT/DELETE /api/workflow-configs/[id]
+```
+
+## 28.7 Validação
+
+Schemas Zod em `lib/validation.ts`:
+
+```text
+channelSchema          → create/edit channel
+updateChannelSchema    → partial update
+workflowConfigSchema   → create/edit workflow config
+generateAssetSchema    → trigger asset generation
+assetStudioTypeSchema  → "music" | "thumbnail" | "background" | "description" | "video"
+```

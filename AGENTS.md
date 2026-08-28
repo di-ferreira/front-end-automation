@@ -1001,7 +1001,74 @@ Uma tarefa só está concluída quando:
 
 ---
 
-# 40. Regra Final
+# 40. Asset Studio
+
+O Asset Studio permite gerar assets individuais (música, thumbnail, background, descrição, vídeo) para canais configurados.
+
+## 40.1 Estrutura de Dados
+
+```text
+channels → workflow_configs (1:N)
+channels → asset_generations (1:N)
+workflow_configs → workflow_executions (1:N)
+asset_generations → workflow_executions (1:N)
+```
+
+## 40.2 Canais
+
+Canais são entidades gerenciadas via `/channels`. Cada canal possui:
+
+- name, slug (unique), description, color, icon, enabled
+- Workflow configs associados (um por asset type)
+
+## 40.3 Workflow Configs
+
+Cada config define:
+
+- channel_id + asset_type (combinação única)
+- webhook_url, method, headers, priority, timeout_ms
+- enabled/disabled
+
+## 40.4 Geração de Assets
+
+Fluxo:
+
+1. Usuário seleciona canal + tipo de asset
+2. `resolveWorkflow()` busca config no DB (fallback: env)
+3. `executeWorkflow()` chama webhook externo
+4. Resultado registrado em `asset_generations` + `workflow_executions`
+
+## 40.5 Pages
+
+```text
+/channels              → CRUD de canais
+/channels/[id]         → Detalhe + workflow configs
+/assets/music          → Music Asset Studio
+/assets/thumbnail      → Thumbnail Asset Studio
+/assets/background     → Background Asset Studio
+/assets/description    → Description Asset Studio
+/assets/video          → Video Asset Studio
+```
+
+## 40.6 Scripts
+
+```bash
+npm run db:migrate          # Aplica migrations
+npm run db:seed:workflows   # Popula 3 canais × 5 asset types
+npm run test                # Executa testes unitários
+```
+
+## 40.7 Regras
+
+- Canais devem ter slug único em minúsculas
+- Workflow configs devem ter slug único
+- Webhook URLs não devem ficar no .env após migração
+- Não expor secrets nos payloads de request/response
+- Validar input com Zod em toda fronteira
+
+---
+
+# 41. Regra Final
 
 Prioridade das decisões:
 
