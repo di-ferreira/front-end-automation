@@ -41,6 +41,7 @@ export async function updateChannel(
 }
 
 export async function deleteChannel(id: number): Promise<boolean> {
-  const result = await db.delete(channels).where(eq(channels.id, id));
-  return result.changes > 0;
+  if (!(await getChannel(id))) return false;
+  await db.delete(channels).where(eq(channels.id, id));
+  return true;
 }
