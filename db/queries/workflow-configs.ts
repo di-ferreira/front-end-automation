@@ -52,6 +52,18 @@ export async function getWorkflowConfigBySlug(slug: string): Promise<WorkflowCon
   return row ?? null;
 }
 
+export async function getWorkflowConfigByChannelAndType(
+  channelId: number,
+  assetType: string,
+): Promise<WorkflowConfigRow | null> {
+  const [row] = await db
+    .select()
+    .from(workflowConfigs)
+    .where(and(eq(workflowConfigs.channelId, channelId), eq(workflowConfigs.assetType, assetType)))
+    .limit(1);
+  return row ?? null;
+}
+
 /**
  * Resolve qual workflow usar para um canal + asset type.
  * Retorna o workflow habilitado com maior prioridade.

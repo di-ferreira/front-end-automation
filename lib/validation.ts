@@ -175,6 +175,7 @@ export function firstZodMessage(error: z.ZodError): string {
 // ---------------------------------------------------------------------------
 
 export const ASSET_STUDIO_TYPES = [
+  "all",
   "music",
   "thumbnail",
   "background",
@@ -184,6 +185,7 @@ export const ASSET_STUDIO_TYPES = [
 export type AssetStudioType = (typeof ASSET_STUDIO_TYPES)[number];
 
 export const ASSET_STUDIO_TYPE_LABELS: Record<AssetStudioType, string> = {
+  all: "Principal (todos)",
   music: "Música",
   thumbnail: "Thumbnail",
   background: "Background",

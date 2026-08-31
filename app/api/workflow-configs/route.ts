@@ -8,6 +8,7 @@ import {
   listWorkflowConfigs,
   createWorkflowConfig,
   getWorkflowConfigBySlug,
+  getWorkflowConfigByChannelAndType,
 } from "@/db/queries/workflow-configs";
 
 export async function GET() {
@@ -37,6 +38,17 @@ export async function POST(request: Request) {
   if (existing) {
     return NextResponse.json(
       { error: "Já existe uma configuração com este slug" },
+      { status: 409, headers: JSON_HEADERS },
+    );
+  }
+
+  const existingChannelType = await getWorkflowConfigByChannelAndType(
+    parsed.data.channelId,
+    parsed.data.assetType,
+  );
+  if (existingChannelType) {
+    return NextResponse.json(
+      { error: "Já existe um workflow para este canal e tipo de asset" },
       { status: 409, headers: JSON_HEADERS },
     );
   }

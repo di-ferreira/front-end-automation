@@ -158,6 +158,7 @@ export const workflowConfigs = mysqlTable(
   },
   (table) => [
     uniqueIndex("workflow_configs_slug_unique").on(table.slug),
+    uniqueIndex("workflow_configs_channel_asset_unique").on(table.channelId, table.assetType),
     index("workflow_configs_channel_id_idx").on(table.channelId),
   ],
 );

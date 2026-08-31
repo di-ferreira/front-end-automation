@@ -8,15 +8,14 @@ export const metadata = {
 
 export default async function N8NWebhookConfigPage() {
   const [channels, configs] = await Promise.all([listChannels(), listWorkflowConfigs()]);
-  const fallbackUrl = process.env.N8N_WEBHOOK_URL?.trim() || null;
 
   return (
     <section className="space-y-6">
       <div>
         <h1 className="text-foreground text-2xl font-semibold tracking-tight">Webhooks N8N</h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          Configure os webhooks por canal e por tipo de asset. Use as abas para alternar entre
-          canais e o workflow principal.
+          Cada canal pode ter um workflow principal (gera todos os assets) e workflows separados por
+          tipo. Configure por abas.
         </p>
       </div>
 
@@ -28,7 +27,7 @@ export default async function N8NWebhookConfigPage() {
           </p>
         </div>
       ) : (
-        <WebhookConfigTabs channels={channels} configs={configs} fallbackUrl={fallbackUrl} />
+        <WebhookConfigTabs channels={channels} configs={configs} />
       )}
     </section>
   );

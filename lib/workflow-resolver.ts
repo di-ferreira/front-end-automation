@@ -10,8 +10,8 @@ export interface ResolvedWorkflow extends WorkflowConfigRow {
 
 /**
  * Resolve qual workflow usar para um canal + asset type.
- * 1. Busca no DB por channelId + assetType (enabled, maior prioridade)
- * 2. Fallback: N8N_WEBHOOK_URL do .env (legacy)
+ * Busca no DB por channelId + assetType (enabled, maior prioridade).
+ * Sem fallback — se não houver config no banco, retorna null.
  */
 export async function resolveWorkflow(
   channelId: number,
@@ -41,31 +41,5 @@ export async function resolveWorkflow(
     };
   }
 
-  const fallbackUrl = process.env.N8N_WEBHOOK_URL?.trim();
-  if (!fallbackUrl) return null;
-
-  console.warn(
-    `[workflow-resolver] Fallback N8N_WEBHOOK_URL para canal=${channelId} asset=${assetType}. Configure um workflow_configs no banco.`,
-  );
-
-  const [channel] = await db.select().from(channels).where(eq(channels.id, channelId)).limit(1);
-
-  return {
-    id: 0,
-    channelId,
-    assetType,
-    name: `Legacy ${assetType}`,
-    slug: `legacy-${channel?.slug ?? "unknown"}-${assetType}`,
-    webhookUrl: fallbackUrl,
-    method: "POST",
-    headers: null,
-    enabled: 1,
-    priority: 0,
-    timeoutMs: 10_000,
-    metadata: null,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    channelName: channel?.name ?? "Unknown",
-    channelSlug: channel?.slug ?? "unknown",
-  };
+  return null;
 }

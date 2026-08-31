@@ -1,7 +1,7 @@
 /**
  * Seed idempotente para workflow_configs.
  *
- * Cria 3 canais (jazz, lofi, metalcore) × 5 asset types = 15 configs.
+ * Cria 3 canais (jazz, lofi, metalcore) × 6 asset types (all + 5) = 18 configs.
  * Se o canal ou config já existir (por slug), skipa.
  *
  * Uso: npx tsx db/seed-workflows.ts
@@ -41,9 +41,10 @@ const CHANNELS: (typeof channels.$inferInsert)[] = [
 ];
 
 // ── Asset types ──────────────────────────────────────────────────
-const ASSET_TYPES = ["music", "thumbnail", "background", "description", "video"] as const;
+const ASSET_TYPES = ["all", "music", "thumbnail", "background", "description", "video"] as const;
 
 const ASSET_LABELS: Record<(typeof ASSET_TYPES)[number], string> = {
+  all: "Principal",
   music: "Music Generator",
   thumbnail: "Thumbnail Generator",
   background: "Background Generator",

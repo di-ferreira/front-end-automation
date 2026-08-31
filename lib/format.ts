@@ -100,6 +100,7 @@ export function relativePath(filePath: string): string {
 // ---------------------------------------------------------------------------
 
 export const ASSET_STUDIO_TYPE_BADGE_CLASSES: Record<AssetStudioType, string> = {
+  all: "border-indigo-200 bg-indigo-50 text-indigo-700 dark:border-indigo-800 dark:bg-indigo-950 dark:text-indigo-300",
   music:
     "border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-800 dark:bg-violet-950 dark:text-violet-300",
   thumbnail:

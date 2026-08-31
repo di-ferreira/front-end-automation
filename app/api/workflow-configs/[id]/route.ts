@@ -6,6 +6,7 @@ import { updateWorkflowConfigSchema } from "@/lib/validation";
 import { firstZodMessage } from "@/lib/validation";
 import {
   getWorkflowConfig,
+  getWorkflowConfigByChannelAndType,
   updateWorkflowConfig,
   deleteWorkflowConfig,
 } from "@/db/queries/workflow-configs";
@@ -52,6 +53,21 @@ export async function PUT(request: Request, { params }: RouteContext) {
       { error: firstZodMessage(parsed.error) },
       { status: 400, headers: JSON_HEADERS },
     );
+  }
+
+  if (parsed.data.channelId !== undefined || parsed.data.assetType !== undefined) {
+    const existing = await getWorkflowConfig(configId);
+    if (existing) {
+      const nextChannelId = parsed.data.channelId ?? existing.channelId;
+      const nextAssetType = parsed.data.assetType ?? existing.assetType;
+      const dup = await getWorkflowConfigByChannelAndType(nextChannelId, nextAssetType);
+      if (dup && dup.id !== configId) {
+        return NextResponse.json(
+          { error: "Já existe um workflow para este canal e tipo de asset" },
+          { status: 409, headers: JSON_HEADERS },
+        );
+      }
+    }
   }
 
   const config = await updateWorkflowConfig(configId, parsed.data);
