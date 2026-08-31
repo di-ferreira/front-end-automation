@@ -10,6 +10,7 @@ const links = [
   { href: "/channels", label: "Canais" },
   { href: "/assets/music", label: "Asset Studio" },
   { href: "/prompts", label: "Prompts" },
+  { href: "/n8n-webhook-config", label: "Webhook Config" },
 ];
 
 export function NavLinks() {
