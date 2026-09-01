@@ -22,7 +22,8 @@ import {
 
 describe("label records", () => {
   it("has labels for all asset studio types", () => {
-    expect(Object.keys(ASSET_STUDIO_TYPE_LABELS)).toHaveLength(5);
+    expect(Object.keys(ASSET_STUDIO_TYPE_LABELS)).toHaveLength(6);
+    expect(ASSET_STUDIO_TYPE_LABELS.all).toBe("Principal (todos)");
     expect(ASSET_STUDIO_TYPE_LABELS.music).toBe("Música");
     expect(ASSET_STUDIO_TYPE_LABELS.thumbnail).toBe("Thumbnail");
     expect(ASSET_STUDIO_TYPE_LABELS.background).toBe("Background");

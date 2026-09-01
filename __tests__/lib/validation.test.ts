@@ -120,4 +120,27 @@ describe("workflowConfigSchema", () => {
       }),
     ).toThrow();
   });
+
+  it("accepts assetType 'all' (workflow principal)", () => {
+    const result = workflowConfigSchema.parse({
+      channelId: 1,
+      assetType: "all",
+      name: "Jazz Principal",
+      slug: "jazz-all",
+      webhookUrl: "http://localhost:5678/webhook/jazz-all",
+    });
+    expect(result.assetType).toBe("all");
+  });
+
+  it("rejects assetType null (reproduz bug do form)", () => {
+    expect(() =>
+      workflowConfigSchema.parse({
+        channelId: 1,
+        assetType: null,
+        name: "Jazz Music Generator",
+        slug: "jazz-music",
+        webhookUrl: "http://localhost:5678/webhook/jazz-music",
+      }),
+    ).toThrow();
+  });
 });

@@ -138,8 +138,8 @@ export function WorkflowConfigFormDialog({ channelId, config }: WorkflowConfigFo
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Tipo de Asset</Label>
-              <Select defaultValue={config?.assetType ?? "music"}>
-                <SelectTrigger name="assetType" className="w-full">
+              <Select name="assetType" defaultValue={config?.assetType ?? "music"}>
+                <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -154,8 +154,8 @@ export function WorkflowConfigFormDialog({ channelId, config }: WorkflowConfigFo
 
             <div className="space-y-2">
               <Label>Método</Label>
-              <Select defaultValue={config?.method ?? "POST"}>
-                <SelectTrigger name="method" className="w-full">
+              <Select name="method" defaultValue={config?.method ?? "POST"}>
+                <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

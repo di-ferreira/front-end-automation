@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
 
-import { db } from "@/db";
+import { db, type AppDatabase } from "@/db";
 import { channels, workflowConfigs, type WorkflowConfigRow } from "@/db/schema";
 
 export interface WorkflowConfigWithChannel extends WorkflowConfigRow {
@@ -8,8 +8,10 @@ export interface WorkflowConfigWithChannel extends WorkflowConfigRow {
   channelSlug: string;
 }
 
-export async function listWorkflowConfigs(): Promise<WorkflowConfigWithChannel[]> {
-  const rows = await db
+export async function listWorkflowConfigs(
+  dbx: AppDatabase = db,
+): Promise<WorkflowConfigWithChannel[]> {
+  const rows = await dbx
     .select({
       config: workflowConfigs,
       channelName: channels.name,
@@ -26,9 +28,12 @@ export async function listWorkflowConfigs(): Promise<WorkflowConfigWithChannel[]
   }));
 }
 
-export async function getWorkflowConfig(id: number): Promise<WorkflowConfigWithChannel | null> {
+export async function getWorkflowConfig(
+  id: number,
+  dbx: AppDatabase = db,
+): Promise<WorkflowConfigWithChannel | null> {
   if (!Number.isInteger(id)) return null;
-  const [row] = await db
+  const [row] = await dbx
     .select({
       config: workflowConfigs,
       channelName: channels.name,
@@ -43,8 +48,11 @@ export async function getWorkflowConfig(id: number): Promise<WorkflowConfigWithC
   return { ...row.config, channelName: row.channelName, channelSlug: row.channelSlug };
 }
 
-export async function getWorkflowConfigBySlug(slug: string): Promise<WorkflowConfigRow | null> {
-  const [row] = await db
+export async function getWorkflowConfigBySlug(
+  slug: string,
+  dbx: AppDatabase = db,
+): Promise<WorkflowConfigRow | null> {
+  const [row] = await dbx
     .select()
     .from(workflowConfigs)
     .where(eq(workflowConfigs.slug, slug))
@@ -55,8 +63,9 @@ export async function getWorkflowConfigBySlug(slug: string): Promise<WorkflowCon
 export async function getWorkflowConfigByChannelAndType(
   channelId: number,
   assetType: string,
+  dbx: AppDatabase = db,
 ): Promise<WorkflowConfigRow | null> {
-  const [row] = await db
+  const [row] = await dbx
     .select()
     .from(workflowConfigs)
     .where(and(eq(workflowConfigs.channelId, channelId), eq(workflowConfigs.assetType, assetType)))
@@ -71,8 +80,9 @@ export async function getWorkflowConfigByChannelAndType(
 export async function resolveWorkflow(
   channelId: number,
   assetType: string,
+  dbx: AppDatabase = db,
 ): Promise<WorkflowConfigRow | null> {
-  const [row] = await db
+  const [row] = await dbx
     .select()
     .from(workflowConfigs)
     .where(
@@ -87,8 +97,11 @@ export async function resolveWorkflow(
   return row ?? null;
 }
 
-export async function listWorkflowsByChannel(channelId: number): Promise<WorkflowConfigRow[]> {
-  return db
+export async function listWorkflowsByChannel(
+  channelId: number,
+  dbx: AppDatabase = db,
+): Promise<WorkflowConfigRow[]> {
+  return dbx
     .select()
     .from(workflowConfigs)
     .where(eq(workflowConfigs.channelId, channelId))
@@ -97,25 +110,27 @@ export async function listWorkflowsByChannel(channelId: number): Promise<Workflo
 
 export async function createWorkflowConfig(
   data: typeof workflowConfigs.$inferInsert,
+  dbx: AppDatabase = db,
 ): Promise<WorkflowConfigRow> {
-  const [inserted] = await db.insert(workflowConfigs).values(data).returning();
+  const [inserted] = await dbx.insert(workflowConfigs).values(data).returning();
   return inserted;
 }
 
 export async function updateWorkflowConfig(
   id: number,
   data: Partial<typeof workflowConfigs.$inferInsert>,
+  dbx: AppDatabase = db,
 ): Promise<WorkflowConfigRow | null> {
-  if (!(await getWorkflowConfig(id))) return null;
+  if (!(await getWorkflowConfig(id, dbx))) return null;
   const now = new Date();
-  await db
+  await dbx
     .update(workflowConfigs)
     .set({ ...data, updatedAt: now })
     .where(eq(workflowConfigs.id, id));
-  return (await getWorkflowConfig(id)) ?? null;
+  return (await getWorkflowConfig(id, dbx)) ?? null;
 }
 
-export async function deleteWorkflowConfig(id: number): Promise<boolean> {
-  const result = await db.delete(workflowConfigs).where(eq(workflowConfigs.id, id));
+export async function deleteWorkflowConfig(id: number, dbx: AppDatabase = db): Promise<boolean> {
+  const result = await dbx.delete(workflowConfigs).where(eq(workflowConfigs.id, id));
   return result.changes > 0;
 }
