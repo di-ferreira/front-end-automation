@@ -62,6 +62,12 @@ export function WorkflowConfigFormDialog({ channelId, config }: WorkflowConfigFo
     setSlug(value);
   }, []);
 
+  const [webhookUrl, setWebhookUrl] = useState(config?.webhookUrl ?? "");
+  const localhostWarning =
+    webhookUrl.includes("localhost") || webhookUrl.includes("127.0.0.1")
+      ? "Dentro do Docker, use http://n8n:5678/webhook/... — localhost aponta para o próprio app e falhará."
+      : null;
+
   function onSubmit(formData: FormData) {
     const data = {
       channelId,
@@ -175,11 +181,19 @@ export function WorkflowConfigFormDialog({ channelId, config }: WorkflowConfigFo
               id={`wf-url-${config?.id ?? "novo"}`}
               name="webhookUrl"
               type="url"
-              defaultValue={config?.webhookUrl ?? ""}
-              placeholder="http://localhost:5678/webhook/jazz-music"
+              value={webhookUrl}
+              onChange={(e) => setWebhookUrl(e.target.value)}
+              placeholder="http://n8n:5678/webhook/jazz-music"
               required
               maxLength={2048}
             />
+            {localhostWarning && (
+              <p className="text-xs text-amber-600 dark:text-amber-400">{localhostWarning}</p>
+            )}
+            <p className="text-muted-foreground text-xs">
+              Dica: no Docker use{" "}
+              <code className="bg-muted rounded px-1">http://n8n:5678/webhook/...</code>
+            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">

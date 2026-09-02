@@ -17,6 +17,19 @@ export interface WorkflowExecutionResult {
   durationMs: number;
 }
 
+function normalizeWebhookUrl(url: string): string {
+  // Dentro do container, localhost/127.0.0.1 apontam para o próprio app, não para o N8N.
+  // Reescreve automaticamente para o host Docker 'n8n' e loga aviso para rastreio.
+  if (typeof url !== "string") return url;
+  const normalized = url
+    .replace(/^http:\/\/localhost:5678/i, "http://n8n:5678")
+    .replace(/^http:\/\/127\.0\.0\.1:5678/i, "http://n8n:5678");
+  if (normalized !== url) {
+    console.warn(`[workflow-executor] webhookUrl normalizado: ${url} -> ${normalized}`);
+  }
+  return normalized;
+}
+
 /**
  * Executa um workflow via HTTP usando a config resolvida.
  */
@@ -33,10 +46,11 @@ export async function executeWorkflow(
     Object.assign(headers, config.headers);
   }
 
+  const webhookUrl = normalizeWebhookUrl(config.webhookUrl);
   const startTime = Date.now();
 
   try {
-    const response = await fetch(config.webhookUrl, {
+    const response = await fetch(webhookUrl, {
       method: config.method || "POST",
       headers,
       body: JSON.stringify(payload),

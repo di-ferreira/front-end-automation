@@ -36,17 +36,31 @@ export function WebhookConfigTabs({ channels, configs }: WebhookConfigTabsProps)
           promptText: "teste webhook",
         }),
       });
-      const data = (await res.json().catch(() => ({}))) as { error?: string };
-      if (res.ok) {
-        setTestResult((prev) => ({ ...prev, [cfg.id]: "✓ disparado" }));
+      const data = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        status?: string;
+        durationMs?: number;
+        generationId?: number;
+      };
+      if (!res.ok) {
+        setTestResult((prev) => ({
+          ...prev,
+          [cfg.id]: `✗ ${data.error ?? res.statusText} (${res.status})`,
+        }));
+      } else if (data.status === "failed") {
+        setTestResult((prev) => ({
+          ...prev,
+          [cfg.id]: `✗ ${data.error ?? "webhook falhou"} (${data.durationMs ?? 0}ms)`,
+        }));
       } else {
-        setTestResult((prev) => ({ ...prev, [cfg.id]: `✗ ${data.error ?? res.statusText}` }));
+        const ms = data.durationMs != null ? ` (${data.durationMs}ms)` : "";
+        setTestResult((prev) => ({ ...prev, [cfg.id]: `✓ disparado${ms}` }));
       }
     } catch {
       setTestResult((prev) => ({ ...prev, [cfg.id]: "✗ falha de rede" }));
     } finally {
       setTestingId(null);
-      setTimeout(() => setTestResult((prev) => ({ ...prev, [cfg.id]: "" })), 4000);
+      setTimeout(() => setTestResult((prev) => ({ ...prev, [cfg.id]: "" })), 6000);
     }
   }, []);
 

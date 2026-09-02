@@ -1,7 +1,7 @@
 FROM node:24-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN apk add --no-cache python3 make g++ && npm install
 
 FROM node:24-alpine AS builder
 WORKDIR /app
@@ -21,6 +21,7 @@ RUN mkdir -p /app/output && chown node:node /app/output
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=node:node /app/.next/standalone ./
 COPY --from=builder --chown=node:node /app/.next/static ./.next/static
+COPY --from=deps /app/node_modules ./node_modules
 USER node
 EXPOSE 3000
 CMD ["node", "server.js"]
