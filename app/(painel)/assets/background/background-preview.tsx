@@ -16,7 +16,7 @@ interface BackgroundPreviewProps {
 }
 
 export function BackgroundPreview({ channels, initialGenerations }: BackgroundPreviewProps) {
-  const [generations] = useState(initialGenerations);
+  const [generations, setGenerations] = useState(initialGenerations);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,7 +34,7 @@ export function BackgroundPreview({ channels, initialGenerations }: BackgroundPr
         setError(result.error ?? "Erro ao gerar background");
         return;
       }
-      window.location.reload();
+      setGenerations((prev) => [result, ...prev]);
     } catch {
       setError("Falha ao conectar com o servidor");
     } finally {

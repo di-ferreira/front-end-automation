@@ -1,7 +1,12 @@
+"use client";
+
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { formatDateTime, formatBytes } from "@/lib/format";
 import { AssetStatusBadge, AssetTypeBadge } from "./asset-status-badge";
+import { LoadingSpinner } from "@/components/loading-spinner";
 import type { GenerationStatus, AssetStudioType } from "@/lib/validation";
+import type { GenerationWorkflowExecution } from "@/db/queries/asset-generations";
 
 interface AssetPreviewCardProps {
   generation: {
@@ -15,6 +20,7 @@ interface AssetPreviewCardProps {
     createdAt: Date;
   };
   channelName: string;
+  workflowExecution?: GenerationWorkflowExecution | null;
   children?: React.ReactNode;
   className?: string;
 }
@@ -22,13 +28,24 @@ interface AssetPreviewCardProps {
 export function AssetPreviewCard({
   generation,
   channelName,
+  workflowExecution,
   children,
   className,
 }: AssetPreviewCardProps) {
+  const router = useRouter();
+
+  const handleClick = () => {
+    router.push(`/assets/${generation.assetType}/${generation.id}`);
+  };
+
   return (
-    <div
+    <button
+      type="button"
+      onClick={handleClick}
       className={cn(
-        "bg-card rounded-xl border p-4 shadow-sm transition-shadow hover:shadow-md",
+        "bg-card hover:border-primary/30 w-full cursor-pointer rounded-xl border p-4 text-left shadow-sm transition-all hover:shadow-md",
+        generation.status === "generating" && "border-sky-400/50",
+        generation.status === "failed" && "border-red-400/50",
         className,
       )}
     >
@@ -37,7 +54,10 @@ export function AssetPreviewCard({
           <AssetTypeBadge type={generation.assetType as AssetStudioType} />
           <AssetStatusBadge status={generation.status} />
         </div>
-        <span className="text-muted-foreground text-xs">#{generation.id}</span>
+        <div className="flex items-center gap-1">
+          {generation.status === "generating" && <LoadingSpinner label="" />}
+          <span className="text-muted-foreground text-xs">#{generation.id}</span>
+        </div>
       </div>
 
       <div className="mb-3 text-sm">
@@ -52,9 +72,15 @@ export function AssetPreviewCard({
         </div>
       )}
 
+      {workflowExecution?.durationMs != null && (
+        <div className="text-muted-foreground mb-2 text-xs">
+          Duração: {workflowExecution.durationMs}ms
+        </div>
+      )}
+
       {generation.error && <p className="text-destructive mb-3 text-xs">{generation.error}</p>}
 
       {children}
-    </div>
+    </button>
   );
 }

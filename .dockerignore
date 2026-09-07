@@ -3,12 +3,16 @@ node_modules
 out
 build
 output
+__tests__
+scripts
+tsconfig.tsbuildinfo
 .git
 .gitignore
 .env*
 !.env.example
 Dockerfile
 docker-compose.yml
+docker-compose.yml.old
 .prettierignore
 .prettierrc
 eslint.config.mjs

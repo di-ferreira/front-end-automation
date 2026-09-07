@@ -16,7 +16,7 @@ interface ThumbnailPreviewProps {
 }
 
 export function ThumbnailPreview({ channels, initialGenerations }: ThumbnailPreviewProps) {
-  const [generations] = useState(initialGenerations);
+  const [generations, setGenerations] = useState(initialGenerations);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,7 +34,7 @@ export function ThumbnailPreview({ channels, initialGenerations }: ThumbnailPrev
         setError(result.error ?? "Erro ao gerar thumbnail");
         return;
       }
-      window.location.reload();
+      setGenerations((prev) => [result, ...prev]);
     } catch {
       setError("Falha ao conectar com o servidor");
     } finally {
